@@ -106,6 +106,12 @@ td.acts{white-space:nowrap} td.acts .btn{margin-right:3px}
 textarea{font-family:var(--f-num);font-size:13px;width:100%;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px}
 input[type=date]{font:inherit;font-size:15px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
 code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0 4px;border-radius:3px}
+.ro .edit-only{display:none!important}
+.ro input:disabled,.ro select:disabled{background:transparent;border-color:transparent;color:var(--ink);opacity:1;-webkit-text-fill-color:var(--ink)}
+.sheetbar{border-left:3px solid var(--acc);background:var(--acc-soft);padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.sheetbar.err{border-color:var(--warn);background:var(--warn-bg)}
+.sync .btn{padding:3px 9px;font-size:12.5px}
+a.btn{text-decoration:none;display:inline-block}
 @media print{
   nav.tabs,.hide-print,.sync{display:none!important}
   body{background:#fff;color:#000}
@@ -123,7 +129,7 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
       <h1>Kalkulator Isolasi Pipa</h1>
       <div class="sub">Kebutuhan material &amp; biaya dari progress meter lari — basis koefisien AHS kontrak</div>
     </div>
-    <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Master bawaan (Excel V0.3)</span></div>
+    <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Master bawaan (Excel V0.3)</span><button class="btn hide-print" id="syncReload" hidden>Muat ulang</button></div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -184,7 +190,8 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
 
   <!-- ============ MASTER ============ -->
   <section id="tab-master" hidden>
-    <div class="panel savebar">
+    <div id="mSheetBar" hidden></div>
+    <div class="panel savebar edit-only">
       <div class="row" style="justify-content:space-between">
         <div class="muted" id="mStatus">Ubah data lalu klik Simpan.</div>
         <div class="row hide-print"><button class="btn" id="mUndo" disabled>Batalkan perubahan</button><button class="btn pri" id="mSave" disabled>Simpan master</button></div>
@@ -195,21 +202,21 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
       <button data-sub="ahs" aria-selected="false">Size Pipa &amp; Koefisien AHS</button>
       <button data-sub="cal" aria-selected="false">Calcium Silicate</button>
       <button data-sub="hist" aria-selected="false">Riwayat Harga</button>
-      <button data-sub="bak" aria-selected="false">Backup &amp; Pulihkan</button>
+      <button data-sub="bak" aria-selected="false">Sumber Data &amp; Backup</button>
     </nav>
 
     <div id="sub-mat">
-      <p class="muted">Harga bisa langsung diubah di kolom <b>Harga</b>; tanggal harga otomatis terisi hari ini. Klik <b>Edit</b> untuk mengubah nama, satuan, kemasan, dan supplier. Semua harga dihitung lewat <b>satuan fisik</b> (m, m², pcs, kg, set) supaya beda ukuran roll atau kemasan tidak salah hitung.</p>
+      <p class="muted edit-only">Harga bisa langsung diubah di kolom <b>Harga</b>; tanggal harga otomatis terisi hari ini. Klik <b>Edit</b> untuk mengubah nama, satuan, kemasan, dan supplier. Semua harga dihitung lewat <b>satuan fisik</b> (m, m², pcs, kg, set) supaya beda ukuran roll atau kemasan tidak salah hitung.</p>
       <div class="tbl-wrap"><table class="edit" id="mMat"></table></div>
-      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mMatAdd">+ Tambah material</button></div>
+      <div class="row hide-print edit-only" style="margin-top:8px"><button class="btn sm" id="mMatAdd">+ Tambah material</button></div>
       <div id="mMatForm"></div>
     </div>
 
     <div id="sub-ahs" hidden>
       <p class="muted">Satu baris = satu size pipa (atau item Dinding/HE per m²). Kolom = material, diisi koefisien per 1 m lari dalam <b>satuan AHS</b>. Kosongkan sel bila material tidak dipakai untuk size itu. Penulisan size harus sama dengan Master Calcium (contoh <code>8"</code>, <code>1 1/2"</code>).</p>
       <div class="tbl-wrap"><table class="edit" id="mAhs"></table></div>
-      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mAhsAdd">+ Tambah size</button><button class="btn sm" id="mAhsPasteBtn">Tempel dari Excel</button></div>
-      <div id="mAhsPaste" hidden class="panel paste">
+      <div class="row hide-print edit-only" style="margin-top:8px"><button class="btn sm" id="mAhsAdd">+ Tambah size</button><button class="btn sm" id="mAhsPasteBtn">Tempel dari Excel</button></div>
+      <div id="mAhsPaste" hidden class="panel paste edit-only">
         <label class="f" for="mAhsTxt">Tempel baris dari Excel — urutan kolom: <span id="mAhsOrder"></span></label>
         <textarea id="mAhsTxt" rows="6" placeholder='20"	0,30	0,20	0,28	6	1,64	0,21	22'></textarea>
         <div class="row" style="margin-top:8px"><button class="btn pri sm" id="mAhsApply">Masukkan</button><span class="muted">Size yang sudah ada akan diperbarui, size baru ditambahkan.</span></div>
@@ -219,8 +226,8 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
     <div id="sub-cal" hidden>
       <p class="muted">Set/CTN = PC/CTN ÷ PC/SET &nbsp;·&nbsp; Meter/CTN = Set/CTN × panjang per set. Harga Calcium diisi <b>per set</b> untuk tiap size; bila kosong dipakai harga cadangan di Material &amp; Harga.</p>
       <div class="tbl-wrap"><table class="edit" id="mCal"></table></div>
-      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mCalAdd">+ Tambah size</button><button class="btn sm" id="mCalPasteBtn">Tempel dari Excel</button></div>
-      <div id="mCalPaste" hidden class="panel paste">
+      <div class="row hide-print edit-only" style="margin-top:8px"><button class="btn sm" id="mCalAdd">+ Tambah size</button><button class="btn sm" id="mCalPasteBtn">Tempel dari Excel</button></div>
+      <div id="mCalPaste" hidden class="panel paste edit-only">
         <label class="f" for="mCalTxt">Tempel baris dari Excel — urutan kolom: Size · Tebal (mm) · INTDIA (mm) · PC/SET · PC/CTN · Harga/set (boleh kosong)</label>
         <textarea id="mCalTxt" rows="6" placeholder='8"	50	222	3	8	125000'></textarea>
         <div class="row" style="margin-top:8px"><button class="btn pri sm" id="mCalApply">Masukkan</button><span class="muted">Size yang sudah ada akan diperbarui, size baru ditambahkan.</span></div>
@@ -234,16 +241,24 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
     </div>
 
     <div id="sub-bak" hidden>
+      <div class="panel" style="margin-bottom:16px">
+        <h3 style="margin-top:0">Sumber data master</h3>
+        <div id="srcStatus" class="muted"></div>
+        <div class="grid-in" style="margin-top:10px">
+          <label class="f" for="srcUrl" style="grid-column:1/-1">URL Web App Google Sheets (berakhiran /exec)<input type="text" id="srcUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></label>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn pri" id="srcConnect">Hubungkan &amp; muat</button><button class="btn" id="srcDisconnect">Putuskan (pakai master lokal)</button></div>
+      </div>
       <div class="cols2">
         <div class="panel">
           <h3 style="margin-top:0">Kirim master ke perangkat lain</h3>
           <p class="muted">Master tersimpan di browser perangkat ini. Ekspor menjadi file .json, kirim lewat WhatsApp/email, lalu Impor di perangkat tujuan.</p>
-          <div class="row"><button class="btn pri" id="mExport">Ekspor master (.json)</button><button class="btn" id="mImport">Impor master</button><input type="file" id="mFile" accept=".json,application/json" hidden></div>
+          <div class="row"><button class="btn pri" id="mExport">Ekspor master (.json)</button><button class="btn edit-only" id="mImport">Impor master</button><input type="file" id="mFile" accept=".json,application/json" hidden></div>
         </div>
         <div class="panel">
           <h3 style="margin-top:0">Kembalikan data awal</h3>
           <p class="muted">Mengganti semua master dengan data Excel V0.3 (harga, koefisien, dan data Calcium awal). Riwayat harga tetap disimpan.</p>
-          <button class="btn" id="mReset">Kembalikan ke data Excel V0.3</button>
+          <button class="btn edit-only" id="mReset">Kembalikan ke data Excel V0.3</button>
         </div>
       </div>
     </div>
@@ -293,6 +308,12 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
 <script>
 (function(){
 "use strict";
+/* ================================================================
+   URL GOOGLE SHEETS — tempel URL Web App Apps Script (berakhiran /exec)
+   di antara tanda kutip di bawah, supaya semua orang yang membuka
+   aplikasi ini otomatis memakai master dari Google Sheets.
+   ================================================================ */
+const SHEET_URL = '';
 /* ---------------- DEFAULT MASTER (Excel V0.3) ---------------- */
 const MAT_IDS=['banding','alu','sil','gasper','calsil','wire','screw'];
 const DEFAULT={
@@ -588,7 +609,7 @@ function renderMatList(withForm=true){
       <td>${esc(m.hargaPer)}${num(m.isiHarga)!==1?'<span class="s">isi '+fN(num(m.isiHarga))+' '+esc(m.satF)+'</span>':''}</td>
       <td class="num" id="mha${i}">${num(m.harga)>0?fRp(hA):'<span class="pill bad">belum ada</span>'}</td>
       <td id="mtg${i}">${fDate(m.tglHarga)}</td><td>${esc(m.sumber||'–')}</td>
-      <td class="acts"><button class="btn sm" data-edit="${esc(m.id)}">${editMat===m.id?'Tutup':'Edit'}</button><button class="btn sm" data-up="${i}" ${i===0?'disabled':''} aria-label="Naikkan">↑</button><button class="btn sm" data-down="${i}" ${i===M.mat.length-1?'disabled':''} aria-label="Turunkan">↓</button><button class="btn sm danger" data-delmat="${i}">Hapus</button></td></tr>`;
+      <td class="acts"><button class="btn sm" data-edit="${esc(m.id)}">${editMat===m.id?'Tutup':(sheetMode?'Lihat':'Edit')}</button><button class="btn sm edit-only" data-up="${i}" ${i===0?'disabled':''} aria-label="Naikkan">↑</button><button class="btn sm edit-only" data-down="${i}" ${i===M.mat.length-1?'disabled':''} aria-label="Turunkan">↓</button><button class="btn sm danger edit-only" data-delmat="${i}">Hapus</button></td></tr>`;
   });
   $('mMat').innerHTML=h+'</tbody>';
   if(withForm) renderMatForm();
@@ -632,7 +653,7 @@ function renderAhs(){
   $('mAhsOrder').textContent=['Size',...M.mat.map(m=>m.nama+' ('+m.satAHS+')')].join(' · ');
   let h=`<thead><tr><th>Size / item</th>${M.mat.map(m=>`<th class="num">${esc(m.nama)}<span class="s">${esc(m.satAHS)} / m</span></th>`).join('')}<th></th></tr></thead><tbody>`;
   M.ahs.forEach((a,i)=>{
-    h+=`<tr><td>${inp(a.size,`ahs.${i}.size`,'text',140)}</td>${M.mat.map(m=>`<td>${inp(a.k[m.id],`ahs.${i}.k.${m.id}`,'number',70)}</td>`).join('')}<td><button class="btn sm danger" data-dahs="${i}">Hapus</button></td></tr>`;
+    h+=`<tr><td>${inp(a.size,`ahs.${i}.size`,'text',140)}</td>${M.mat.map(m=>`<td>${inp(a.k[m.id],`ahs.${i}.k.${m.id}`,'number',70)}</td>`).join('')}<td><button class="btn sm danger edit-only" data-dahs="${i}">Hapus</button></td></tr>`;
   });
   $('mAhs').innerHTML=h+'</tbody>';
 }
@@ -643,7 +664,7 @@ function renderCalMaster(){
       <td>${inp(c.pcset,`calsil.${i}.pcset`)}</td><td>${inp(c.pcctn,`calsil.${i}.pcctn`)}</td>
       <td class="num" id="msc${i}">${fN(d.setCtn,2)}</td><td class="num" id="mmc${i}">${fN(d.mCtn,3)}</td>
       <td>${inp(c.harga,`calsil.${i}.harga`,'number',110)}</td><td id="mct${i}">${fDate(c.tglHarga)}</td>
-      <td>${inp(c.status,`calsil.${i}.status`,'text',110)}</td><td><button class="btn sm danger" data-dcal="${i}">Hapus</button></td></tr>`;});
+      <td>${inp(c.status,`calsil.${i}.status`,'text',110)}</td><td><button class="btn sm danger edit-only" data-dcal="${i}">Hapus</button></td></tr>`;});
   $('mCal').innerHTML=h+'</tbody>';
 }
 function renderHist(){
@@ -659,6 +680,7 @@ function renderHist(){
 }
 function renderMaster(){ renderMatList(); renderAhs(); renderCalMaster(); renderHist(); bindInputs($('tab-master')); bindMasterButtons(); }
 function bindInputs(root){
+  if(sheetMode) root.querySelectorAll('#tab-master [data-p], [data-p]').forEach(el=>{ if(el.closest('#tab-master')) el.disabled=true; });
   root.querySelectorAll('[data-p]').forEach(el=>{
     if(el._b) return; el._b=1;
     el.addEventListener('input',onMasterInput);
@@ -706,6 +728,13 @@ function syncField(path,value,except){
 function markDirty(){dirty=true;$('mSave').disabled=false;$('mUndo').disabled=false;setSync();}
 function setSync(msg){
   const d=$('syncDot'),t=$('syncTxt');
+  $('syncReload').hidden=!sheetMode;
+  if(sheetMode){
+    d.className='dot'+(sheetState==='ok'?' on':(sheetState==='err'?' dirty':''));
+    const tm=sheetInfo&&sheetInfo.readAt?new Date(sheetInfo.readAt).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'';
+    t.textContent=msg||(sheetState==='loading'?'Memuat master dari Google Sheets…':sheetState==='ok'?'Master: Google Sheets · '+tm:(sheetInfo?'Gagal terhubung — memakai data Sheet terakhir ('+tm+')':'Gagal memuat Google Sheets — memakai master bawaan'));
+    renderSheetBar(); return;
+  }
   d.className='dot'+(dirty?' dirty':(savedAt?' on':''));
   if(msg){t.textContent=msg;return;}
   if(dirty) t.textContent='Ada perubahan master belum disimpan';
@@ -829,14 +858,110 @@ $('mFile').onchange=e=>{
   rd.readAsText(f);
 };
 
+/* ---------------- GOOGLE SHEETS ---------------- */
+const CACHE_KEY='kalkulatorIsolasi.sheetCache.v1', URL_KEY='kalkulatorIsolasi.sheetUrl';
+let sheetMode=false, sheetState='', sheetInfo=null, sheetErr='', hadCache=false;
+function getSheetUrl(){ if(SHEET_URL) return SHEET_URL.trim(); try{return (localStorage.getItem(URL_KEY)||'').trim();}catch(e){return '';} }
+const normH=s=>String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]/g,'');
+function tableRows(t){ if(!Array.isArray(t)||!t.length) return null; const h=t[0].map(normH);
+  return t.slice(1).filter(r=>Array.isArray(r)&&r.some(v=>String(v==null?'':v).trim()!=='')).map(r=>{const o={};h.forEach((k,i)=>{if(k&&!(k in o))o[k]=r[i];});return o;}); }
+const pick=(o,...keys)=>{for(const k of keys){const v=o[k]; if(v!==undefined&&v!==null&&String(v).trim()!=='')return v;}return '';};
+const pn=v=>{const n=parseNum(v);return n==null?null:n;};
+function parseSheet(j){
+  if(!j||j.ok===false) throw new Error('Balasan Web App tidak dikenali');
+  const mrows=tableRows(j.MATERIAL); if(!mrows) throw new Error('Sheet MATERIAL tidak ditemukan');
+  const warn=[], seen={};
+  const mat=mrows.filter(o=>String(pick(o,'namamaterial','nama')).trim()).map(o=>{
+    const nama=String(pick(o,'namamaterial','nama')).trim();
+    let id=String(pick(o,'id')).trim()||normH(nama).slice(0,24);
+    if(seen[id]){warn.push('ID "'+id+'" dipakai lebih dari sekali');id=id+'_'+(++seen[id]);} else seen[id]=1;
+    return {id,nama,tipe:/calc|calsil|kalsium/i.test(String(pick(o,'jenis','tipe')))?'calsil':'umum',
+      satAHS:String(pick(o,'satuanahs')||'Pcs'),satF:String(pick(o,'satuanfisik')||pick(o,'satuanahs')||'pcs'),
+      isiAHS:pn(pick(o,'isi1satuanahs','isisatuanahs'))||1,harga:pn(pick(o,'hargarp','harga'))||0,
+      hargaPer:String(pick(o,'basisharga')||''),isiHarga:pn(pick(o,'isibasisharga'))||1,
+      kemasan:String(pick(o,'kemasanbeli','kemasan')||''),isiKem:pn(pick(o,'isikemasan'))||0,
+      tglHarga:String(pick(o,'tglharga','tanggalharga')||''),sumber:String(pick(o,'supplier','suppliersumber','sumber')||''),cat:String(pick(o,'catatan')||'')};
+  });
+  if(!mat.length) throw new Error('Sheet MATERIAL kosong');
+  const ahs=[];
+  if(Array.isArray(j.AHS)&&j.AHS.length){
+    const hd=j.AHS[0], map=[];
+    hd.forEach((h,i)=>{ if(i===0) return; const n=normH(h); if(!n) return;
+      const m=mat.find(x=>normH(x.id)===n)||mat.find(x=>normH(x.nama)===n);
+      if(m) map.push([i,m.id]); else warn.push('Kolom AHS "'+h+'" tidak cocok dengan ID material mana pun');});
+    j.AHS.slice(1).forEach(r=>{ const size=String(r[0]==null?'':r[0]).trim(); if(!size) return;
+      const k={}; map.forEach(([i,id])=>{const n=pn(r[i]); if(n!=null) k[id]=n;}); ahs.push({size,k}); });
+    mat.forEach(m=>{ if(!map.some(x=>x[1]===m.id)) warn.push('Material "'+m.nama+'" belum punya kolom di sheet AHS'); });
+  } else warn.push('Sheet AHS tidak ditemukan');
+  const calsil=(tableRows(j.CALSIL)||[]).filter(o=>String(pick(o,'size','pipesize')).trim()).map(o=>({
+    size:String(pick(o,'size','pipesize')).trim(),t:pn(pick(o,'tebalmm','tebal','thicknessmm'))||0,intdia:pn(pick(o,'intdiamm','intdia','intdiasuppliermm'))||0,
+    len:pn(pick(o,'panjangsetm','lengthsetm','panjangset'))||0.61,pcset:pn(pick(o,'pcset'))||0,pcctn:pn(pick(o,'pcctn'))||0,
+    harga:pn(pick(o,'hargasetrp','hargaset'))||0,tglHarga:String(pick(o,'tglharga')||''),status:String(pick(o,'status')||'Available')}));
+  if(!calsil.length) warn.push('Sheet CALSIL kosong atau tidak ditemukan');
+  return {mat,ahs,calsil,warn};
+}
+async function loadSheet(manual){
+  const url=getSheetUrl(); if(!url) return;
+  sheetState='loading'; setSync(); $('syncReload').disabled=true;
+  try{
+    const res=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store',redirect:'follow'});
+    if(!res.ok) throw new Error('Server membalas '+res.status);
+    let j; try{ j=await res.json(); }catch(e){ throw new Error('Balasan bukan data master. Pastikan akses Web App = "Anyone".'); }
+    const d=parseSheet(j);
+    const next={mat:d.mat,ahs:d.ahs,calsil:d.calsil};
+    let hs=[];
+    if(hadCache){ const keep=M; M=next; hs=diffHistory().map(x=>Object.assign(x,{ket:(x.ket?x.ket+' · ':'')+'dari Google Sheets'})); M=keep; }
+    M=next; SAVED=clone(M); hadCache=true;
+    if(hs.length) HIST=HIST.concat(hs).slice(-1000);
+    sheetInfo={readAt:j.readAt||new Date().toISOString(),name:j.sheetName||'',url:j.sheetUrl||'',warn:d.warn};
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({src:url,data:next,info:sheetInfo}));}catch(e){}
+    persist(); savedAt=sheetInfo.readAt; dirty=false; sheetState='ok'; sheetErr='';
+    refreshAll(true); setSync(manual&&hs.length?hs.length+' perubahan baru dari Google Sheets':undefined);
+  }catch(err){ sheetState='err'; sheetErr=String(err&&err.message||err); if(/Failed to fetch|NetworkError|Load failed/i.test(sheetErr)) sheetErr='Tidak bisa terhubung (cek internet, atau URL Web App salah).'; setSync(); }
+  $('syncReload').disabled=false;
+}
+function renderSheetBar(){
+  const bar=$('mSheetBar'); if(!bar) return;
+  bar.hidden=!sheetMode; $('tab-master').classList.toggle('ro',sheetMode);
+  const st=$('srcStatus'), ui=$('srcUrl');
+  if(ui){ if(SHEET_URL){ui.value=SHEET_URL;ui.disabled=true;} else if(document.activeElement!==ui) ui.value=getSheetUrl(); }
+  if($('srcDisconnect')) $('srcDisconnect').hidden=!sheetMode||!!SHEET_URL;
+  if(!sheetMode){ if(st) st.innerHTML='Saat ini memakai <b>master lokal</b> di browser ini. Tempel URL Web App Google Sheets untuk memakai master bersama.'; return; }
+  const tm=sheetInfo&&sheetInfo.readAt?new Date(sheetInfo.readAt).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'–';
+  const warn=(sheetInfo&&sheetInfo.warn||[]).map(w=>'<li>'+esc(w)+'</li>').join('');
+  bar.className='sheetbar'+(sheetState==='err'?' err':'');
+  bar.innerHTML=`<div><b>Master diambil dari Google Sheets${sheetInfo&&sheetInfo.name?' “'+esc(sheetInfo.name)+'”':''}</b> · dibaca ${tm}<br>
+    <span class="muted">${sheetState==='err'?'Gagal memuat terbaru: '+esc(sheetErr)+' Data di bawah adalah hasil muat terakhir.':'Untuk mengubah harga, material, atau size: ubah di Google Sheet, lalu klik Muat ulang.'}</span>
+    ${warn?'<ul class="find">'+warn+'</ul>':''}</div>
+    <div class="row">${sheetInfo&&sheetInfo.url?`<a class="btn" href="${esc(sheetInfo.url)}" target="_blank" rel="noopener">Buka Google Sheet</a>`:''}<button class="btn pri" id="barReload">Muat ulang</button></div>`;
+  $('barReload').onclick=()=>loadSheet(true);
+  if(st) st.innerHTML=SHEET_URL?'Terhubung ke Google Sheets (URL diatur di file aplikasi, berlaku untuk semua pengguna).':'Terhubung ke Google Sheets (URL disimpan di browser ini saja). Agar berlaku untuk semua orang, tempel URL di baris <code>const SHEET_URL</code> pada file aplikasi.';
+}
+$('syncReload').onclick=()=>loadSheet(true);
+$('srcConnect').onclick=()=>{
+  const u=$('srcUrl').value.trim();
+  if(!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(u)){alert('URL harus diawali https://script.google.com/macros/s/… dan berakhiran /exec');return;}
+  if(dirty&&!confirm('Perubahan master lokal yang belum disimpan akan diganti data Google Sheets. Lanjut?'))return;
+  try{localStorage.setItem(URL_KEY,u);}catch(e){}
+  hadCache=false; sheetInfo=null; sheetMode=true; editMat=null; loadSheet(true);
+};
+$('srcDisconnect').onclick=()=>{
+  if(!confirm('Putuskan dari Google Sheets? Aplikasi akan memakai master lokal (salinan data Sheet terakhir).'))return;
+  try{localStorage.removeItem(URL_KEY);localStorage.removeItem(CACHE_KEY);}catch(e){}
+  sheetMode=false; sheetState=''; sheetInfo=null; dirty=false; refreshAll(true); setSync();
+};
+
 /* init */
 try{const raw=localStorage.getItem(LS_KEY); if(raw){const d=JSON.parse(raw); if(Array.isArray(d.mat)&&Array.isArray(d.ahs)&&Array.isArray(d.calsil)){M=normalize(d);savedAt=d.updatedAt||null;HIST=Array.isArray(d.hist)?d.hist:[];}}}catch(e){storageOK=false;}
 SAVED=clone(M);
+sheetMode=!!getSheetUrl();
+if(sheetMode){ try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c&&c.src===getSheetUrl()&&c.data&&Array.isArray(c.data.mat)){M=normalize(c.data);SAVED=clone(M);sheetInfo=c.info||null;hadCache=true;}}catch(e){} }
 fillSizeSelect($('hSize')); $('hSize').value='8"';
 fillSizeSelect($('cSize'),{calOnly:true}); $('cSize').value='8"';
 refreshAll(true);
 try{const t=localStorage.getItem('isoTab'); if(t&&$('tab-'+t)) showTab(t);}catch(e){}
 setSync();
+if(sheetMode) loadSheet(false);
 
 })();
 </script>
