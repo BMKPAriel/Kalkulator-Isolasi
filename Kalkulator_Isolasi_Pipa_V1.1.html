@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Isolasi Pipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#EEF1F2; --panel:#FFFFFF; --panel2:#F6F8F8; --ink:#172125; --ink2:#4B5A60; --ink3:#7A898F;
+  --line:#D5DCDE; --line2:#E6EBEC;
+  --acc:#0B5E6B; --acc-soft:#DCEDEF; --acc-ink:#FFFFFF;
+  --warn:#9A6200; --warn-bg:#FFF3D6; --bad:#A3322A; --bad-bg:#FBE4E1; --ok:#1F7A45; --ok-bg:#DFF3E6;
+  --f-disp:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111719; --panel:#182124; --panel2:#1D282B; --ink:#E6ECED; --ink2:#AEBBBF; --ink3:#7F8F94;
+    --line:#2E3B3F; --line2:#243034;
+    --acc:#4FB3C2; --acc-soft:#173A40; --acc-ink:#0B1A1D;
+    --warn:#F0B84A; --warn-bg:#3A2E12; --bad:#F08A80; --bad-bg:#3D1C19; --ok:#6FD49A; --ok-bg:#16331F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111719; --panel:#182124; --panel2:#1D282B; --ink:#E6ECED; --ink2:#AEBBBF; --ink3:#7F8F94;
+  --line:#2E3B3F; --line2:#243034;
+  --acc:#4FB3C2; --acc-soft:#173A40; --acc-ink:#0B1A1D;
+  --warn:#F0B84A; --warn-bg:#3A2E12; --bad:#F08A80; --bad-bg:#3D1C19; --ok:#6FD49A; --ok-bg:#16331F;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-family:var(--f-disp);font-weight:700;font-size:30px;letter-spacing:.01em;margin:0;line-height:1.1;text-wrap:balance}
+.sub{color:var(--ink2);font-size:14px;margin-top:4px}
+.sync{font-size:12.5px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.dot.on{background:var(--ok)} .dot.dirty{background:var(--warn)}
+nav.tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs button{font-family:var(--f-disp);font-weight:600;font-size:16px;letter-spacing:.02em;background:none;border:0;color:var(--ink2);padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--acc);border-bottom-color:var(--acc)}
+nav.tabs button:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.grid-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+select,input[type=number],input[type=text]{font:inherit;font-size:16px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:9px 10px;width:100%}
+input[type=number]{font-family:var(--f-num);font-size:15px}
+.btn{font:inherit;font-weight:600;font-size:14px;border-radius:4px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:16px 0}
+.tile{background:var(--panel);padding:12px 14px}
+.tile .k{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.tile .v{font-family:var(--f-num);font-weight:600;font-size:21px;margin-top:2px;font-variant-numeric:tabular-nums}
+.tile .n{font-size:12.5px;color:var(--ink2)}
+.tile.hl .v{color:var(--acc)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+th{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);background:var(--panel2);white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num{font-size:13.5px}
+td .s{display:block;font-size:12px;color:var(--ink3);font-family:var(--f-body)}
+tfoot td{font-weight:700;background:var(--panel2);border-bottom:0}
+tr.miss td{color:var(--ink3)}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:10px;white-space:nowrap}
+.pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.ok{background:var(--ok-bg);color:var(--ok)}
+.note{border-left:3px solid var(--warn);background:var(--warn-bg);color:var(--ink);padding:8px 12px;border-radius:0 4px 4px 0;font-size:14px;margin:10px 0}
+.note.bad{border-color:var(--bad);background:var(--bad-bg)}
+.note.info{border-color:var(--acc);background:var(--acc-soft)}
+h2{font-family:var(--f-disp);font-weight:700;font-size:21px;margin:22px 0 8px}
+h3{font-family:var(--f-disp);font-weight:600;font-size:17px;margin:18px 0 6px}
+.muted{color:var(--ink2);font-size:13.5px}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.calc-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}
+.calc-strip > div{border-top:2px solid var(--acc);padding-top:6px}
+.calc-strip .k{font-size:12px;color:var(--ink2)}
+.calc-strip .v{font-family:var(--f-num);font-weight:600;font-size:18px}
+.formula{font-family:var(--f-num);font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.7}
+table.edit input{font-size:13.5px;padding:5px 6px;min-width:64px;background:var(--panel)}
+table.edit input[type=text]{min-width:120px}
+table.edit td{padding:4px 5px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:var(--panel2);color:var(--ink2);padding:8px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink)}
+ul.find{padding-left:18px;margin:6px 0} ul.find li{margin:6px 0}
+.hide-print{}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 12px}
+.subtabs button{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);padding:7px 12px;border-radius:999px;cursor:pointer}
+.subtabs button[aria-selected="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.savebar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+tr.sel td{background:var(--acc-soft)}
+td.acts{white-space:nowrap} td.acts .btn{margin-right:3px}
+.btn.danger{color:var(--bad)}
+.hint{font-size:11.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink3)}
+.f.derived{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.f.derived b{font-family:var(--f-num);font-size:14px;letter-spacing:0;text-transform:none;color:var(--acc);padding:9px 0}
+.panel.form{margin-top:14px;border-color:var(--acc)}
+.panel.paste{margin-top:10px}
+textarea{font-family:var(--f-num);font-size:13px;width:100%;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px}
+input[type=date]{font:inherit;font-size:15px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0 4px;border-radius:3px}
+@media print{
+  nav.tabs,.hide-print,.sync{display:none!important}
+  body{background:#fff;color:#000}
+  .panel,.tbl-wrap,.tiles{border-color:#999}
+  section[hidden]{display:none!important}
+}
+@media (max-width:520px){ h1{font-size:25px} .tile .v{font-size:18px} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Kalkulator Isolasi Pipa</h1>
+      <div class="sub">Kebutuhan material &amp; biaya dari progress meter lari — basis koefisien AHS kontrak</div>
+    </div>
+    <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Master bawaan (Excel V0.3)</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="hitung">Hitung Progress</button>
+    <button role="tab" aria-selected="false" data-tab="calsil">Konversi Calcium</button>
+    <button role="tab" aria-selected="false" data-tab="rekap">Rekap Multi Size</button>
+    <button role="tab" aria-selected="false" data-tab="master">Master Data</button>
+    <button role="tab" aria-selected="false" data-tab="cek">Cek Data</button>
+  </nav>
+
+  <!-- ============ HITUNG ============ -->
+  <section id="tab-hitung">
+    <div class="panel">
+      <div class="grid-in">
+        <label class="f">Size pipa<select id="hSize"></select></label>
+        <label class="f"><span id="hProgLbl">Progress (m lari)</span><input type="number" id="hProg" min="0" step="0.1" value="50"></label>
+        <div class="row hide-print"><button class="btn" id="hPrint">Cetak / PDF</button></div>
+      </div>
+      <div id="hWarn"></div>
+    </div>
+    <div class="tiles" id="hTiles"></div>
+    <div class="tbl-wrap"><table id="hTbl"></table></div>
+    <p class="muted">Biaya progress = kebutuhan teoritis × harga satuan (tanpa pembulatan) — dipakai untuk analisa biaya per meter.
+      Kolom <b>Beli</b> = kebutuhan yang dibulatkan ke kemasan pembelian bila size ini dibeli terpisah.
+      Elbow/fitting sudah termasuk dalam meter lari.</p>
+    <div id="hCal"></div>
+  </section>
+
+  <!-- ============ CALSIL ============ -->
+  <section id="tab-calsil" hidden>
+    <div class="panel">
+      <div class="grid-in">
+        <label class="f">Size pipa<select id="cSize"></select></label>
+        <div class="f" style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)">Arah hitung</span>
+          <div class="seg" role="group"><button id="cModeBox" aria-pressed="true">Box → Meter</button><button id="cModeM" aria-pressed="false">Meter → Box</button></div></div>
+        <label class="f" id="cBoxWrap">Jumlah box / carton terpasang<input type="number" id="cBox" min="0" step="1" value="10"></label>
+        <label class="f" id="cPcsWrap">Tambahan pcs lepas<input type="number" id="cPcs" min="0" step="1" value="0"></label>
+        <label class="f" id="cMWrap" hidden>Panjang pipa (m)<input type="number" id="cM" min="0" step="0.1" value="50"></label>
+      </div>
+      <div id="cOut"></div>
+    </div>
+    <h2>Tabel isi carton per size</h2>
+    <div class="tbl-wrap"><table id="cRef"></table></div>
+  </section>
+
+  <!-- ============ REKAP ============ -->
+  <section id="tab-rekap" hidden>
+    <div class="panel">
+      <div class="muted" style="margin-bottom:8px">Gabungkan beberapa size sekaligus — misalnya progress satu minggu atau satu area.</div>
+      <div class="tbl-wrap"><table id="rIn"></table></div>
+      <div class="row hide-print" style="margin-top:10px"><button class="btn" id="rAdd">+ Tambah baris</button><button class="btn" id="rPrint">Cetak / PDF</button></div>
+    </div>
+    <div class="tiles" id="rTiles"></div>
+    <h2>Total material gabungan</h2>
+    <div class="tbl-wrap"><table id="rTbl"></table></div>
+    <p class="muted">Kebutuhan beli digabung dulu baru dibulatkan ke kemasan, sehingga lebih hemat dibanding membulatkan per size.</p>
+  </section>
+
+  <!-- ============ MASTER ============ -->
+  <section id="tab-master" hidden>
+    <div class="panel savebar">
+      <div class="row" style="justify-content:space-between">
+        <div class="muted" id="mStatus">Ubah data lalu klik Simpan.</div>
+        <div class="row hide-print"><button class="btn" id="mUndo" disabled>Batalkan perubahan</button><button class="btn pri" id="mSave" disabled>Simpan master</button></div>
+      </div>
+    </div>
+    <nav class="subtabs" role="tablist">
+      <button data-sub="mat" aria-selected="true">Material &amp; Harga</button>
+      <button data-sub="ahs" aria-selected="false">Size Pipa &amp; Koefisien AHS</button>
+      <button data-sub="cal" aria-selected="false">Calcium Silicate</button>
+      <button data-sub="hist" aria-selected="false">Riwayat Harga</button>
+      <button data-sub="bak" aria-selected="false">Backup &amp; Pulihkan</button>
+    </nav>
+
+    <div id="sub-mat">
+      <p class="muted">Harga bisa langsung diubah di kolom <b>Harga</b>; tanggal harga otomatis terisi hari ini. Klik <b>Edit</b> untuk mengubah nama, satuan, kemasan, dan supplier. Semua harga dihitung lewat <b>satuan fisik</b> (m, m², pcs, kg, set) supaya beda ukuran roll atau kemasan tidak salah hitung.</p>
+      <div class="tbl-wrap"><table class="edit" id="mMat"></table></div>
+      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mMatAdd">+ Tambah material</button></div>
+      <div id="mMatForm"></div>
+    </div>
+
+    <div id="sub-ahs" hidden>
+      <p class="muted">Satu baris = satu size pipa (atau item Dinding/HE per m²). Kolom = material, diisi koefisien per 1 m lari dalam <b>satuan AHS</b>. Kosongkan sel bila material tidak dipakai untuk size itu. Penulisan size harus sama dengan Master Calcium (contoh <code>8"</code>, <code>1 1/2"</code>).</p>
+      <div class="tbl-wrap"><table class="edit" id="mAhs"></table></div>
+      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mAhsAdd">+ Tambah size</button><button class="btn sm" id="mAhsPasteBtn">Tempel dari Excel</button></div>
+      <div id="mAhsPaste" hidden class="panel paste">
+        <label class="f" for="mAhsTxt">Tempel baris dari Excel — urutan kolom: <span id="mAhsOrder"></span></label>
+        <textarea id="mAhsTxt" rows="6" placeholder='20"	0,30	0,20	0,28	6	1,64	0,21	22'></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn pri sm" id="mAhsApply">Masukkan</button><span class="muted">Size yang sudah ada akan diperbarui, size baru ditambahkan.</span></div>
+      </div>
+    </div>
+
+    <div id="sub-cal" hidden>
+      <p class="muted">Set/CTN = PC/CTN ÷ PC/SET &nbsp;·&nbsp; Meter/CTN = Set/CTN × panjang per set. Harga Calcium diisi <b>per set</b> untuk tiap size; bila kosong dipakai harga cadangan di Material &amp; Harga.</p>
+      <div class="tbl-wrap"><table class="edit" id="mCal"></table></div>
+      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mCalAdd">+ Tambah size</button><button class="btn sm" id="mCalPasteBtn">Tempel dari Excel</button></div>
+      <div id="mCalPaste" hidden class="panel paste">
+        <label class="f" for="mCalTxt">Tempel baris dari Excel — urutan kolom: Size · Tebal (mm) · INTDIA (mm) · PC/SET · PC/CTN · Harga/set (boleh kosong)</label>
+        <textarea id="mCalTxt" rows="6" placeholder='8"	50	222	3	8	125000'></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn pri sm" id="mCalApply">Masukkan</button><span class="muted">Size yang sudah ada akan diperbarui, size baru ditambahkan.</span></div>
+      </div>
+    </div>
+
+    <div id="sub-hist" hidden>
+      <p class="muted">Tercatat otomatis setiap kali master disimpan: perubahan harga, material baru, dan material yang dihapus.</p>
+      <div class="tbl-wrap"><table id="mHist"></table></div>
+      <div class="row hide-print" style="margin-top:8px"><button class="btn sm" id="mHistClear">Kosongkan riwayat</button></div>
+    </div>
+
+    <div id="sub-bak" hidden>
+      <div class="cols2">
+        <div class="panel">
+          <h3 style="margin-top:0">Kirim master ke perangkat lain</h3>
+          <p class="muted">Master tersimpan di browser perangkat ini. Ekspor menjadi file .json, kirim lewat WhatsApp/email, lalu Impor di perangkat tujuan.</p>
+          <div class="row"><button class="btn pri" id="mExport">Ekspor master (.json)</button><button class="btn" id="mImport">Impor master</button><input type="file" id="mFile" accept=".json,application/json" hidden></div>
+        </div>
+        <div class="panel">
+          <h3 style="margin-top:0">Kembalikan data awal</h3>
+          <p class="muted">Mengganti semua master dengan data Excel V0.3 (harga, koefisien, dan data Calcium awal). Riwayat harga tetap disimpan.</p>
+          <button class="btn" id="mReset">Kembalikan ke data Excel V0.3</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CEK ============ -->
+  <section id="tab-cek" hidden>
+    <div class="panel">
+      <h3 style="margin-top:0">Status data saat ini</h3>
+      <div id="kLive"></div>
+    </div>
+    <h2>Hasil cek Excel V0.3</h2>
+    <div class="cols2">
+      <div class="panel">
+        <h3 style="margin-top:0">Yang sudah benar</h3>
+        <ul class="find">
+          <li>Semua VLOOKUP mengarah ke range yang benar (AHS A3:H26, Calsil A2:H27, Harga A2:G8).</li>
+          <li>Rumus Calcium sesuai blueprint: Set/CTN = PC/CTN ÷ PC/SET, Meter/CTN = Set/CTN × 0,61. Contoh 2" = 17 set, 10,37 m/CTN, 25 m → 2,41 carton.</li>
+          <li>Thickness otomatis sudah sesuai rule kontrak (½"–2" = 25 mm, 3" ke atas = 50 mm).</li>
+          <li>Koefisien AHS di Excel sama persis dengan tabel di blueprint.</li>
+          <li>Kawat: Rp625.000 ÷ 25 kg = Rp25.000/kg sudah benar.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">Yang perlu dikoreksi</h3>
+        <ul class="find">
+          <li><b>Grand Total salah basis.</b> Total dihitung dari qty yang di-ROUNDUP, jadi 25 m pipa 2" dibebani 1 roll aluminium utuh (Rp5.405.000) → total Rp6.026.375. Biaya progress seharusnya qty teoritis × harga = <b>Rp4.485.000 (Rp179.400/m)</b> — atau Rp4.626.250 setelah konversi roll banding 30 m. Pembulatan cukup untuk kebutuhan beli.</li>
+          <li><b>Banding: panjang roll beda.</b> AHS memakai roll 30 m, harga untuk roll 20 m, tapi Excel mengalikan langsung. Kalau AHS benar 30 m, biaya banding kurang 1,5×. Di aplikasi sudah dikonversi lewat meter.</li>
+          <li><b>Pembulatan tidak konsisten.</b> Kawat di tabel atas tidak dibulatkan (F16 = E16), material lain ROUNDUP.</li>
+          <li><b>Angka ditulis manual.</b> INPUT_HARGA kolom F diketik, bukan rumus (mis. F7 seharusnya =C7/D7). Isi kemasan Silicone &amp; Screw di tabel bawah juga diketik 1 (D24, D28) untuk menutupi harga yang per pcs.</li>
+          <li><b>Dropdown hanya ½"–30".</b> Size 1¼", 5", 20", 26", 28", 32"–40" ada di Master Calsil tetapi tidak punya koefisien AHS → hasilnya #N/A.</li>
+          <li><b>Calcium harga Rp0</b>, jadi total belum termasuk Calcium.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3 style="margin-top:0">Perlu dikonfirmasi (belum bisa diputuskan dari data)</h3>
+      <ul class="find">
+        <li><b>Aluminium:</b> koefisien 0,03 roll/m untuk 2" = 1,5 m²/m kalau rollnya 1×50 m, padahal keliling luar 2" + insulasi 25 mm hanya ±0,35 m. Kemungkinan roll di AHS lebih kecil dari Aluminium Sheet 0,5×1×50 m yang dihargai. Aluminium adalah biaya terbesar (±90% dari total), jadi ini yang paling penting untuk dikonfirmasi. Ubah kolom "Isi 1 satuan AHS" di Master kalau ukuran roll AHS sudah diketahui.</li>
+        <li><b>Screw:</b> AHS 10×½", harga 8×½".</li>
+        <li><b>Harga Calcium per size</b> belum ada — isi di Master Calcium.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ---------------- DEFAULT MASTER (Excel V0.3) ---------------- */
+const MAT_IDS=['banding','alu','sil','gasper','calsil','wire','screw'];
+const DEFAULT={
+  mat:[
+    {id:'banding',nama:'Banding SS-304 0.5×19mm×30m',satAHS:'Roll',satF:'m',isiAHS:30,harga:226000,hargaPer:'Roll 20 m',isiHarga:20,kemasan:'Roll 20 m',isiKem:20,cat:'Harga: Strapping Band 0,5×3/4×20 m. AHS: roll 30 m',tipe:'umum',tglHarga:'',sumber:''},
+    {id:'alu',nama:'Aluminium Foil Non Corrugated',satAHS:'Roll',satF:'m²',isiAHS:50,harga:5405000,hargaPer:'Roll 1×50 m',isiHarga:50,kemasan:'Roll 1×50 m',isiKem:50,cat:'Harga: Aluminium Sheet 0,5×1×50 m. Ukuran roll AHS belum dikonfirmasi',tipe:'umum',tglHarga:'',sumber:''},
+    {id:'sil',nama:'Silicon/Mastic 300gr',satAHS:'Pcs',satF:'pcs',isiAHS:1,harga:27500,hargaPer:'Pcs',isiHarga:1,kemasan:'Box 24 pcs',isiKem:24,cat:'Silicone Sealant',tipe:'umum',tglHarga:'',sumber:''},
+    {id:'gasper',nama:'Gasper SS 0.5mm×3/4"',satAHS:'Pcs',satF:'pcs',isiAHS:1,harga:1200,hargaPer:'Pcs',isiHarga:1,kemasan:'Pcs',isiKem:1,cat:'Harga: Wing Seal 0,5×3/4 19 mm',tipe:'umum',tglHarga:'',sumber:''},
+    {id:'calsil',nama:'Calcium Silicate',satAHS:'Set',satF:'set',isiAHS:1,harga:0,hargaPer:'Set',isiHarga:1,kemasan:'Carton',isiKem:0,cat:'Harga per size diisi di Master Calcium; harga di sini hanya cadangan',tipe:'calsil',tglHarga:'',sumber:''},
+    {id:'wire',nama:'Wire Spring SS-304 dia 1.2mm',satAHS:'Kg',satF:'kg',isiAHS:1,harga:625000,hargaPer:'Roll 25 kg',isiHarga:25,kemasan:'Roll 25 kg',isiKem:25,cat:'Harga: Kawat BWG 18',tipe:'umum',tglHarga:'',sumber:''},
+    {id:'screw',nama:'Screw Self Tap 10×1/2"',satAHS:'Pcs',satF:'pcs',isiAHS:1,harga:95,hargaPer:'Pcs',isiHarga:1,kemasan:'Box 2.000 pcs',isiKem:2000,cat:'Harga: Self Tapping Screw 8×1/2',tipe:'umum',tglHarga:'',sumber:''}
+  ],
+  ahs:[
+    ['1/2"',0.04,0.01,0.05,3,1.64,0.02,5],['3/4"',0.04,0.02,0.05,3,1.64,0.02,5],['1"',0.04,0.02,0.05,3,1.64,0.02,5],
+    ['1 1/2"',0.05,0.03,0.05,3,1.64,0.02,5],['2"',0.05,0.03,0.05,3,1.64,0.02,5],['3"',0.07,0.06,0.05,3,1.64,0.04,6],
+    ['4"',0.1,0.06,0.07,3,1.64,0.05,8],['6"',0.12,0.06,0.08,3,1.64,0.06,9],['8"',0.13,0.07,0.09,3,1.64,0.07,9],
+    ['10"',0.16,0.07,0.09,3,1.64,0.07,9],['12"',0.18,0.09,0.11,3,1.64,0.12,10],['14"',0.2,0.11,0.11,3,1.64,0.14,14],
+    ['16"',0.22,0.14,0.19,3,1.64,0.16,14],['18"',0.27,0.17,0.24,6,1.64,0.18,19],['24"',0.39,0.23,0.32,9,1.64,0.24,28],
+    ['30"',0.51,0.29,0.4,12,1.64,0.3,37],
+    ['Dinding (50 MM) - CS',0.13,0.05,0.11,3,1,0.12,16],['Dinding (50 MM) - RW',0.13,0.05,0.11,3,1,0.12,16],
+    ['Dinding (100 MM) - CS',0.18,0.07,0.16,3,1,0.12,16],['Dinding (100 MM) - RW',0.18,0.07,0.16,3,1,0.12,16],
+    ['HE (50 MM) - CS',0.13,0.05,0.11,3,1,0.12,16],['HE (50 MM) - RW',0.13,0.05,0.11,3,1,0.12,16],
+    ['HE (100 MM) - CS',0.18,0.07,0.16,3,1,0.12,16],['HE (100 MM) - RW',0.18,0.07,0.16,3,1,0.12,16]
+  ].map(r=>({size:r[0],k:Object.fromEntries(MAT_IDS.map((id,i)=>[id,r[1+i]]))})),
+  calsil:[
+    ['1/2"',25,23,2,72],['3/4"',25,28,2,64],['1"',25,35,2,56],['1 1/4"',25,44,2,46],['1 1/2"',25,50,2,42],['2"',25,62,2,34],
+    ['3"',50,90,2,10],['4"',50,115,2,8],['5"',50,143,2,8],['6"',50,171,2,6],['8"',50,222,3,8],['10"',50,275,4,9],
+    ['12"',50,327,4,8],['14"',50,358,5,9],['16"',50,409,5,9],['18"',50,460,6,10],['20"',50,511,6,9],['24"',50,613,8,10],
+    ['26"',50,664,8,10],['28"',50,715,9,10],['30"',50,766,9,10],['32"',50,817,10,10],['34"',50,868,10,10],['36"',50,919,11,10],
+    ['38"',50,970,11,10,'Cek Availability'],['40"',50,1022,12,10]
+  ].map(r=>({size:r[0],t:r[1],intdia:r[2],len:0.61,pcset:r[3],pcctn:r[4],harga:0,status:r[5]||'Available'}))
+};
+const clone=o=>JSON.parse(JSON.stringify(o));
+let M=clone(DEFAULT);
+let dirty=false, savedAt=null, storageOK=true, HIST=[], SAVED=clone(M);
+const isCal=m=>m&&m.tipe==='calsil';
+function normalize(d){
+  const mat=d.mat.map(m=>Object.assign({tipe:m.id==='calsil'?'calsil':'umum',tglHarga:'',sumber:''},m));
+  const ids=mat.map(m=>m.id);
+  const ahs=d.ahs.map(a=>({size:a.size,k:Array.isArray(a.k)?Object.fromEntries(a.k.map((v,i)=>[MAT_IDS[i]||ids[i],v])):Object.assign({},a.k)}));
+  const calsil=d.calsil.map(c=>Object.assign({tglHarga:''},c));
+  return {mat,ahs,calsil};
+}
+const LS_KEY='kalkulatorIsolasi.master.v1';
+
+/* ---------------- helpers ---------------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
+const fN=(n,d=2)=>(n==null||!isFinite(n))?'–':n.toLocaleString('id-ID',{maximumFractionDigits:d,minimumFractionDigits:0});
+const fRp=n=>(n==null||!isFinite(n))?'–':'Rp '+Math.round(n).toLocaleString('id-ID');
+function sizeKey(s){
+  const m=String(s).match(/^\s*(\d+)?(?:\s*(\d+)\/(\d+))?\s*"/);
+  if(!m) return 1000;
+  let v=m[1]?+m[1]:0; if(m[2]) v+= +m[2]/+m[3]; return v;
+}
+const isSurface=s=>sizeKey(s)>=1000;
+const findAhs=s=>M.ahs.find(r=>r.size===s);
+const findCal=s=>M.calsil.find(r=>r.size===s);
+function calDerived(c){const setCtn=c.pcset>0?c.pcctn/c.pcset:0;return{setCtn,mCtn:setCtn*c.len}}
+function thickRule(s){const k=sizeKey(s);if(k>=1000)return null;return k<=2?25:50}
+
+/* ---------------- core calc ---------------- */
+function calc(size,prog){
+  const a=findAhs(size), c=findCal(size);
+  const cd=c?calDerived(c):null;
+  const lines=M.mat.map((m)=>{
+    const kv=a?a.k[m.id]:undefined; const koef=(kv==null||kv==='')?null:num(kv);
+    let harga=num(m.harga), isiHarga=num(m.isiHarga)||1, isiKem=num(m.isiKem), kemasan=m.kemasan, hargaSrc='mat';
+    if(isCal(m)){
+      if(c&&num(c.harga)>0){harga=num(c.harga);isiHarga=1;hargaSrc='cal';}
+      isiKem=cd?cd.setCtn:0; kemasan=cd?('Carton '+fN(cd.setCtn,2)+' set'):'—';
+    }
+    const isiAHS=num(m.isiAHS)||1;
+    const hF=harga/isiHarga;                         // Rp per satuan fisik
+    const hAHS=hF*isiAHS;                            // Rp per satuan AHS
+    if(koef==null) return {m,koef:null,miss:true,harga,hAHS};
+    const qA=koef*prog, qF=qA*isiAHS;
+    const biayaM=koef*isiAHS*hF, biaya=qF*hF;
+    let kemT=null,kemB=null,biayaBeli=null;
+    if(isCal(m)&&cd&&cd.mCtn>0){kemT=prog/cd.mCtn;}
+    else if(isiKem>0){kemT=qF/isiKem;}
+    if(kemT!=null){kemB=Math.ceil(kemT-1e-9);biayaBeli=kemB*isiKem*hF;}
+    return {m,koef,qA,qF,isiAHS,hF,hAHS,harga,biayaM,biaya,kemT,kemB,kemasan,isiKem,biayaBeli,noPrice:harga<=0,hargaSrc};
+  });
+  const ok=lines.filter(l=>!l.miss);
+  const tot={biaya:ok.reduce((s,l)=>s+l.biaya,0),biayaM:ok.reduce((s,l)=>s+l.biayaM,0),beli:ok.reduce((s,l)=>s+(l.biayaBeli||0),0)};
+  return {size,prog,a,c,cd,lines,tot,noPrice:ok.filter(l=>l.noPrice).map(l=>l.m.nama)};
+}
+
+/* ---------------- size selects ---------------- */
+function allSizes(){
+  const set=new Set([...M.ahs.map(r=>r.size),...M.calsil.map(r=>r.size)]);
+  return [...set].sort((x,y)=>sizeKey(x)-sizeKey(y)||x.localeCompare(y));
+}
+function fillSizeSelect(sel,{calOnly=false}={}){
+  const cur=sel.value;
+  const sizes=allSizes();
+  let html='';
+  if(calOnly){
+    html=M.calsil.slice().sort((x,y)=>sizeKey(x.size)-sizeKey(y.size)).map(c=>`<option>${esc(c.size)}</option>`).join('');
+  }else{
+    const pipeA=sizes.filter(s=>!isSurface(s)&&findAhs(s));
+    const pipeN=sizes.filter(s=>!isSurface(s)&&!findAhs(s));
+    const surf=sizes.filter(s=>isSurface(s)&&findAhs(s));
+    html+=`<optgroup label="Pipa — koefisien AHS ada">${pipeA.map(s=>`<option>${esc(s)}</option>`).join('')}</optgroup>`;
+    if(pipeN.length) html+=`<optgroup label="Pipa — AHS belum ada (hanya Calcium)">${pipeN.map(s=>`<option>${esc(s)}</option>`).join('')}</optgroup>`;
+    if(surf.length) html+=`<optgroup label="Dinding / HE (per m²)">${surf.map(s=>`<option>${esc(s)}</option>`).join('')}</optgroup>`;
+  }
+  sel.innerHTML=html;
+  if(cur&&[...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+
+/* ---------------- TAB: HITUNG ---------------- */
+function qtyCell(l){
+  const main=`${fN(l.qA,3)} ${esc(l.m.satAHS)}`;
+  const sub=(l.isiAHS!==1)?`<span class="s">= ${fN(l.qF,2)} ${esc(l.m.satF)}</span>`:'';
+  return main+sub;
+}
+function renderHitung(){
+  const size=$('hSize').value, prog=Math.max(0,num($('hProg').value));
+  const surf=isSurface(size), u=surf?'m²':'m';
+  $('hProgLbl').textContent=surf?'Luas progress (m²)':'Progress (m lari)';
+  const r=calc(size,prog);
+  let w='';
+  if(!r.a) w+=`<div class="note bad"><b>Koefisien AHS kontrak untuk ${esc(size)} belum ada.</b> Sesuai blueprint, size ini tidak diinterpolasi otomatis. Tambahkan koefisiennya di Master Data bila sudah ada data kontrak. Konversi Calcium tetap bisa dipakai.</div>`;
+  if(r.a&&r.noPrice.length) w+=`<div class="note">Harga belum ada untuk: <b>${r.noPrice.map(esc).join(', ')}</b> — total di bawah belum termasuk material ini.</div>`;
+  $('hWarn').innerHTML=w;
+  const th=r.c?r.c.t:thickRule(size);
+  const cal=r.lines.find(l=>isCal(l.m));
+  $('hTiles').innerHTML=[
+    ['Tebal Calcium',th?th+' mm':'–',surf?'Dinding/HE':(sizeKey(size)<=2?'Rule ½"–2"':'Rule 3"–40"')],
+    ['Biaya material / '+u,r.a?fRp(r.tot.biayaM):'–','sesuai koefisien AHS',true],
+    ['Total biaya progress',r.a?fRp(r.tot.biaya):'–',fN(prog,2)+' '+u+' × '+esc(size),true],
+    ['Calcium Silicate',cal&&!cal.miss?fN(cal.qA,2)+' set':'–',cal&&cal.kemT!=null?fN(cal.kemT,2)+' carton (beli '+cal.kemB+')':'konversi carton tidak tersedia'],
+    ['Total jika dibeli terpisah',r.a?fRp(r.tot.beli):'–','dibulatkan ke kemasan']
+  ].map(t=>`<div class="tile${t[3]?' hl':''}"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="n">${t[2]}</div></div>`).join('');
+
+  let h=`<thead><tr><th>Material</th><th class="num">Koef / ${u}</th><th class="num">Kebutuhan</th><th class="num">Harga / satuan AHS</th><th class="num">Biaya / ${u}</th><th class="num">Biaya progress</th><th class="num">Beli (kemasan)</th><th class="num">Biaya beli</th></tr></thead><tbody>`;
+  r.lines.forEach(l=>{
+    if(l.miss){h+=`<tr class="miss"><td>${esc(l.m.nama)}</td><td class="num" colspan="7">koefisien AHS belum ada</td></tr>`;return;}
+    const pr=l.noPrice?'<span class="pill bad">harga belum ada</span>':`${fRp(l.hAHS)}<span class="s">/${esc(l.m.satAHS)}${l.isiAHS!==1?' ('+fRp(l.hF)+'/'+esc(l.m.satF)+')':''}</span>`;
+    h+=`<tr><td>${esc(l.m.nama)}</td><td class="num">${fN(l.koef,3)}<span class="s">${esc(l.m.satAHS)}</span></td><td class="num">${qtyCell(l)}</td>
+      <td class="num">${pr}</td><td class="num">${fRp(l.biayaM)}</td><td class="num">${fRp(l.biaya)}</td>
+      <td class="num">${l.kemB!=null?fN(l.kemB,0)+'<span class="s">'+esc(l.kemasan)+' · teoritis '+fN(l.kemT,2)+'</span>':'–'}</td>
+      <td class="num">${l.biayaBeli!=null?fRp(l.biayaBeli):'–'}</td></tr>`;
+  });
+  h+=`</tbody><tfoot><tr><td colspan="4">Total</td><td class="num">${r.a?fRp(r.tot.biayaM):'–'}</td><td class="num">${r.a?fRp(r.tot.biaya):'–'}</td><td></td><td class="num">${r.a?fRp(r.tot.beli):'–'}</td></tr></tfoot>`;
+  $('hTbl').innerHTML=h;
+
+  // calcium detail
+  if(r.c&&!surf){
+    const cd=r.cd, sets=cal&&!cal.miss?cal.qA:prog/r.c.len;
+    $('hCal').innerHTML=`<h2>Rincian Calcium Silicate ${esc(size)}</h2><div class="panel">
+      <div class="calc-strip">
+        <div><div class="k">Set (AHS)</div><div class="v">${fN(sets,2)}</div></div>
+        <div><div class="k">Pcs (× ${r.c.pcset} pc/set)</div><div class="v">${fN(sets*r.c.pcset,1)}</div></div>
+        <div><div class="k">Set / carton</div><div class="v">${fN(cd.setCtn,2)}</div></div>
+        <div><div class="k">Meter / carton</div><div class="v">${fN(cd.mCtn,3)}</div></div>
+        <div><div class="k">Carton teoritis</div><div class="v">${fN(prog/cd.mCtn,2)}</div></div>
+        <div><div class="k">Carton beli</div><div class="v">${Math.ceil(prog/cd.mCtn-1e-9)}</div></div>
+      </div>
+      <div class="formula">Set/CTN = ${r.c.pcctn} PC/CTN ÷ ${r.c.pcset} PC/SET = ${fN(cd.setCtn,3)} &nbsp;·&nbsp; Meter/CTN = ${fN(cd.setCtn,3)} × ${r.c.len} = ${fN(cd.mCtn,3)} m<br>Carton = ${fN(prog,2)} m ÷ ${fN(cd.mCtn,3)} = ${fN(prog/cd.mCtn,3)} &nbsp;·&nbsp; INTDIA supplier ${r.c.intdia} mm</div>
+    </div>`;
+  } else $('hCal').innerHTML='';
+}
+
+/* ---------------- TAB: CALSIL ---------------- */
+let cMode='box';
+function renderCalsil(){
+  const c=findCal($('cSize').value);
+  $('cBoxWrap').hidden=$('cPcsWrap').hidden=cMode!=='box'; $('cMWrap').hidden=cMode==='box';
+  $('cModeBox').setAttribute('aria-pressed',cMode==='box'); $('cModeM').setAttribute('aria-pressed',cMode!=='box');
+  if(!c){$('cOut').innerHTML='';return;}
+  const {setCtn,mCtn}=calDerived(c);
+  let out='';
+  if(cMode==='box'){
+    const box=Math.max(0,num($('cBox').value)), extra=Math.max(0,num($('cPcs').value));
+    const pcs=box*c.pcctn+extra, sets=pcs/c.pcset, m=sets*c.len;
+    out=`<div class="calc-strip">
+      <div><div class="k">Panjang terpasang</div><div class="v" style="color:var(--acc);font-size:24px">${fN(m,2)} m</div></div>
+      <div><div class="k">Total pcs</div><div class="v">${fN(pcs,0)}</div></div>
+      <div><div class="k">Total set</div><div class="v">${fN(sets,2)}</div></div>
+      <div><div class="k">Setara basis AHS (÷1,64)</div><div class="v">${fN(sets/1.64,2)} m</div></div>
+    </div>
+    <div class="formula">${fN(box,2)} CTN × ${c.pcctn} pcs${extra?' + '+fN(extra,0)+' pcs':''} = ${fN(pcs,0)} pcs ÷ ${c.pcset} pc/set = ${fN(sets,2)} set × ${c.len} m = <b>${fN(m,2)} m</b> &nbsp;(tebal ${c.t} mm, ${fN(mCtn,3)} m/carton)</div>
+    <div class="row hide-print" style="margin-top:10px"><button class="btn sm" id="cToCalc" data-m="${m.toFixed(2)}">Hitung material untuk ${fN(m,2)} m →</button></div>`;
+  }else{
+    const m=Math.max(0,num($('cM').value)), sets=m/c.len, pcs=sets*c.pcset, ctn=pcs/c.pcctn;
+    out=`<div class="calc-strip">
+      <div><div class="k">Carton teoritis</div><div class="v" style="color:var(--acc);font-size:24px">${fN(ctn,2)}</div></div>
+      <div><div class="k">Carton beli</div><div class="v">${Math.ceil(ctn-1e-9)}</div></div>
+      <div><div class="k">Set</div><div class="v">${fN(sets,2)}</div></div>
+      <div><div class="k">Pcs</div><div class="v">${fN(Math.ceil(pcs-1e-9),0)}</div></div>
+    </div>
+    <div class="formula">${fN(m,2)} m ÷ ${c.len} = ${fN(sets,2)} set × ${c.pcset} = ${fN(pcs,1)} pcs ÷ ${c.pcctn} pcs/CTN = <b>${fN(ctn,3)} carton</b></div>`;
+  }
+  if(c.status!=='Available') out+=`<div class="note">Status supplier: ${esc(c.status)}</div>`;
+  $('cOut').innerHTML=out;
+  const b=$('cToCalc'); if(b) b.onclick=()=>{const s=$('cSize').value; if([...$('hSize').options].some(o=>o.value===s)) $('hSize').value=s; $('hProg').value=b.dataset.m; showTab('hitung'); renderHitung();};
+}
+function renderCalRef(){
+  let h=`<thead><tr><th>Size</th><th class="num">Tebal</th><th class="num">PC/SET</th><th class="num">PC/CTN</th><th class="num">Set/CTN</th><th class="num">Meter/CTN</th><th>Status</th></tr></thead><tbody>`;
+  M.calsil.slice().sort((x,y)=>sizeKey(x.size)-sizeKey(y.size)).forEach(c=>{const d=calDerived(c);
+    h+=`<tr><td>${esc(c.size)}</td><td class="num">${c.t} mm</td><td class="num">${c.pcset}</td><td class="num">${c.pcctn}</td><td class="num">${fN(d.setCtn,2)}</td><td class="num">${fN(d.mCtn,3)}</td><td>${c.status==='Available'?'<span class="pill ok">Available</span>':'<span class="pill warn">'+esc(c.status)+'</span>'}</td></tr>`;});
+  $('cRef').innerHTML=h+'</tbody>';
+}
+
+/* ---------------- TAB: REKAP ---------------- */
+let R=[{size:'2"',m:25},{size:'4"',m:30},{size:'8"',m:50}];
+try{const s=JSON.parse(localStorage.getItem('isoRekap')||'null'); if(Array.isArray(s)&&s.length) R=s;}catch(e){}
+function saveR(){try{localStorage.setItem('isoRekap',JSON.stringify(R))}catch(e){}}
+function renderRekapInput(){
+  const opts=allSizes().filter(s=>findAhs(s));
+  let h=`<thead><tr><th>Size</th><th class="num">Progress</th><th class="num">Biaya / m</th><th class="num">Subtotal biaya</th><th></th></tr></thead><tbody>`;
+  R.forEach((row,i)=>{
+    h+=`<tr><td><select data-i="${i}" data-f="size" id="rs${i}">${opts.map(s=>`<option${s===row.size?' selected':''}>${esc(s)}</option>`).join('')}</select></td>
+      <td class="num"><input type="number" min="0" step="0.1" data-i="${i}" data-f="m" id="rm${i}" value="${row.m}" style="max-width:120px"></td>
+      <td class="num" id="rbm${i}"></td><td class="num" id="rbt${i}"></td>
+      <td><button class="btn sm hide-print" data-del="${i}" aria-label="Hapus baris">Hapus</button></td></tr>`;
+  });
+  $('rIn').innerHTML=h+`</tbody>`;
+  $('rIn').querySelectorAll('select,input').forEach(el=>el.addEventListener('input',e=>{
+    const i=+e.target.dataset.i; R[i][e.target.dataset.f]=e.target.dataset.f==='m'?num(e.target.value):e.target.value; saveR(); renderRekapOut();}));
+  $('rIn').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{R.splice(+b.dataset.del,1);saveR();renderRekap();});
+  renderRekapOut();
+}
+function renderRekapOut(){
+  const agg=M.mat.map(m=>({m,qA:0,qF:0,biaya:0,hF:null,isiKem:0,kemasan:m.kemasan,noPrice:false,ctn:0,ctnPerSize:[]}));
+  let tot=0,totM=0,noPrice=new Set();
+  R.forEach((row,i)=>{
+    const r=calc(row.size,num(row.m));
+    const bm=$('rbm'+i),bt=$('rbt'+i);
+    if(!r.a){if(bm)bm.textContent='AHS belum ada';if(bt)bt.textContent='–';return;}
+    if(bm)bm.textContent=fRp(r.tot.biayaM); if(bt)bt.textContent=fRp(r.tot.biaya);
+    tot+=r.tot.biaya; totM+=num(row.m);
+    r.noPrice.forEach(n=>noPrice.add(n));
+    r.lines.forEach((l,j)=>{const a=agg[j]; if(l.miss)return;
+      a.qA+=l.qA;a.qF+=l.qF;a.biaya+=l.biaya;a.hF=l.hF;a.noPrice=a.noPrice||l.noPrice;
+      if(isCal(l.m)){ if(l.kemT!=null){a.ctn+=Math.ceil(l.kemT-1e-9); a.ctnT=(a.ctnT||0)+l.kemT; a.ctnCost=(a.ctnCost||0)+l.biayaBeli;} }
+      else a.isiKem=l.isiKem;
+    });
+  });
+  let beli=0;
+  let h=`<thead><tr><th>Material</th><th class="num">Kebutuhan</th><th class="num">Biaya progress</th><th class="num">Beli (kemasan)</th><th class="num">Biaya beli</th></tr></thead><tbody>`;
+  agg.forEach(a=>{
+    let kem='–',bb=null;
+    if(isCal(a.m)){ if(a.ctnT!=null){kem=fN(a.ctn,0)+'<span class="s">carton (dibulatkan per size — isi carton beda tiap size)</span>'; bb=a.ctnCost;} }
+    else if(a.isiKem>0){const kb=Math.ceil(a.qF/a.isiKem-1e-9); kem=fN(kb,0)+'<span class="s">'+esc(a.kemasan)+' · teoritis '+fN(a.qF/a.isiKem,2)+'</span>'; bb=kb*a.isiKem*(a.hF||0);}
+    if(bb) beli+=bb;
+    const q=`${fN(a.qA,3)} ${esc(a.m.satAHS)}${num(a.m.isiAHS)!==1?'<span class="s">= '+fN(a.qF,2)+' '+esc(a.m.satF)+'</span>':''}`;
+    h+=`<tr><td>${esc(a.m.nama)}${a.noPrice?' <span class="pill bad">harga belum ada</span>':''}</td><td class="num">${q}</td><td class="num">${fRp(a.biaya)}</td><td class="num">${kem}</td><td class="num">${bb!=null?fRp(bb):'–'}</td></tr>`;
+  });
+  h+=`</tbody><tfoot><tr><td colspan="2">Total</td><td class="num">${fRp(tot)}</td><td></td><td class="num">${fRp(beli)}</td></tr></tfoot>`;
+  $('rTbl').innerHTML=h;
+  $('rTiles').innerHTML=[
+    ['Total panjang',fN(totM,2)+' m',R.length+' baris'],
+    ['Total biaya progress',fRp(tot),noPrice.size?'belum termasuk '+[...noPrice].join(', '):'semua material berharga',true],
+    ['Rata-rata biaya / m',totM?fRp(tot/totM):'–','tertimbang panjang',true],
+    ['Total jika dibeli',fRp(beli),'dibulatkan ke kemasan']
+  ].map(t=>`<div class="tile${t[3]?' hl':''}"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="n">${esc(t[2])}</div></div>`).join('');
+}
+function renderRekap(){renderRekapInput();}
+
+/* ---------------- TAB: MASTER ---------------- */
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const fDate=s=>{if(!s)return '–';const d=new Date(s.length<=10?s+'T00:00:00':s);return isNaN(d)?esc(s):d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});};
+function parseNum(v){
+  let s=String(v==null?'':v).trim().replace(/\s|Rp/gi,'');
+  if(s==='') return null;
+  if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+  else s=s.replace(',','.');
+  const n=parseFloat(s); return isFinite(n)?n:null;
+}
+const inp=(v,path,type='number',w,extra='')=>`<input type="${type}" ${type==='number'?'step="any"':''} data-p="${path}" id="mi-${path.replace(/[^\w]/g,'_')}${extra?'-'+extra:''}" value="${esc(v==null?'':v)}"${w?` style="min-width:${w}px"`:''}>`;
+let editMat=null, subTab='mat';
+function showSub(s){
+  subTab=s;
+  document.querySelectorAll('nav.subtabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.sub===s));
+  ['mat','ahs','cal','hist','bak'].forEach(k=>$('sub-'+k).hidden=k!==s);
+}
+document.querySelectorAll('nav.subtabs button').forEach(b=>b.onclick=()=>showSub(b.dataset.sub));
+
+function renderMatList(withForm=true){
+  let h=`<thead><tr><th>No</th><th>Material</th><th>Satuan AHS</th><th class="num">Harga (Rp)</th><th>Basis harga</th><th class="num">= Rp / satuan AHS</th><th>Tgl harga</th><th>Supplier / sumber</th><th></th></tr></thead><tbody>`;
+  M.mat.forEach((m,i)=>{
+    const hA=num(m.harga)/(num(m.isiHarga)||1)*(num(m.isiAHS)||1);
+    h+=`<tr${editMat===m.id?' class="sel"':''}><td class="num">${i+1}</td>
+      <td><b>${esc(m.nama)}</b>${isCal(m)?' <span class="pill ok">Calcium</span>':''}<span class="s">${esc(m.cat||'')}</span></td>
+      <td>${esc(m.satAHS)}</td>
+      <td>${inp(m.harga,`mat.${i}.harga`,'number',120,'l')}</td>
+      <td>${esc(m.hargaPer)}${num(m.isiHarga)!==1?'<span class="s">isi '+fN(num(m.isiHarga))+' '+esc(m.satF)+'</span>':''}</td>
+      <td class="num" id="mha${i}">${num(m.harga)>0?fRp(hA):'<span class="pill bad">belum ada</span>'}</td>
+      <td id="mtg${i}">${fDate(m.tglHarga)}</td><td>${esc(m.sumber||'–')}</td>
+      <td class="acts"><button class="btn sm" data-edit="${esc(m.id)}">${editMat===m.id?'Tutup':'Edit'}</button><button class="btn sm" data-up="${i}" ${i===0?'disabled':''} aria-label="Naikkan">↑</button><button class="btn sm" data-down="${i}" ${i===M.mat.length-1?'disabled':''} aria-label="Turunkan">↓</button><button class="btn sm danger" data-delmat="${i}">Hapus</button></td></tr>`;
+  });
+  $('mMat').innerHTML=h+'</tbody>';
+  if(withForm) renderMatForm();
+}
+function renderMatForm(){
+  const i=M.mat.findIndex(m=>m.id===editMat);
+  if(i<0){$('mMatForm').innerHTML='';return;}
+  const m=M.mat[i], hF=num(m.harga)/(num(m.isiHarga)||1);
+  const fld=(lbl,html,hint)=>`<label class="f">${lbl}${html}${hint?`<span class="hint">${hint}</span>`:''}</label>`;
+  $('mMatForm').innerHTML=`<div class="panel form">
+    <h3 style="margin-top:0">Edit material: <span id="mfTitle">${esc(m.nama)}</span></h3>
+    <div class="grid-in">
+      ${fld('Nama material',inp(m.nama,`mat.${i}.nama`,'text',0,'f'))}
+      <label class="f">Jenis<select data-p="mat.${i}.tipe" id="mi-mat_${i}_tipe"><option value="umum"${!isCal(m)?' selected':''}>Umum</option><option value="calsil"${isCal(m)?' selected':''}>Calcium Silicate (carton per size)</option></select></label>
+      ${fld('Supplier / sumber harga',inp(m.sumber,`mat.${i}.sumber`,'text',0,'f'))}
+      ${fld('Tanggal harga',inp(m.tglHarga,`mat.${i}.tglHarga`,'date',0,'f'))}
+    </div>
+    <h3>Satuan</h3>
+    <div class="grid-in">
+      ${fld('Satuan AHS',inp(m.satAHS,`mat.${i}.satAHS`,'text',0,'f'),'satuan di tabel koefisien, mis. Roll')}
+      ${fld('Satuan fisik',inp(m.satF,`mat.${i}.satF`,'text',0,'f'),'m, m², pcs, kg, set')}
+      ${fld('Isi 1 satuan AHS',inp(m.isiAHS,`mat.${i}.isiAHS`,'number',0,'f'),'dalam satuan fisik, mis. 1 roll AHS = 30 m')}
+    </div>
+    <h3>Harga</h3>
+    <div class="grid-in">
+      ${fld('Harga (Rp)',inp(m.harga,`mat.${i}.harga`,'number',0,'f'))}
+      ${fld('Basis harga',inp(m.hargaPer,`mat.${i}.hargaPer`,'text',0,'f'),'mis. Roll 20 m, Pcs')}
+      ${fld('Isi basis harga',inp(m.isiHarga,`mat.${i}.isiHarga`,'number',0,'f'),'dalam satuan fisik, mis. 20 (m)')}
+      <div class="f derived"><span>Hasil konversi</span><b id="mfConv">${fRp(hF)} / ${esc(m.satF)} · ${fRp(hF*(num(m.isiAHS)||1))} / ${esc(m.satAHS)}</b></div>
+    </div>
+    <h3>Kemasan pembelian</h3>
+    <div class="grid-in">
+      ${isCal(m)?'<div class="muted">Isi carton Calcium diambil dari tab Calcium Silicate per size.</div>':
+        fld('Nama kemasan',inp(m.kemasan,`mat.${i}.kemasan`,'text',0,'f'),'mis. Box 24 pcs')+fld('Isi kemasan',inp(m.isiKem,`mat.${i}.isiKem`,'number',0,'f'),'dalam satuan fisik')}
+    </div>
+    <div class="grid-in" style="margin-top:12px">${fld('Catatan',inp(m.cat,`mat.${i}.cat`,'text',0,'f'))}</div>
+  </div>`;
+  bindInputs($('mMatForm'));
+}
+function renderAhs(){
+  $('mAhsOrder').textContent=['Size',...M.mat.map(m=>m.nama+' ('+m.satAHS+')')].join(' · ');
+  let h=`<thead><tr><th>Size / item</th>${M.mat.map(m=>`<th class="num">${esc(m.nama)}<span class="s">${esc(m.satAHS)} / m</span></th>`).join('')}<th></th></tr></thead><tbody>`;
+  M.ahs.forEach((a,i)=>{
+    h+=`<tr><td>${inp(a.size,`ahs.${i}.size`,'text',140)}</td>${M.mat.map(m=>`<td>${inp(a.k[m.id],`ahs.${i}.k.${m.id}`,'number',70)}</td>`).join('')}<td><button class="btn sm danger" data-dahs="${i}">Hapus</button></td></tr>`;
+  });
+  $('mAhs').innerHTML=h+'</tbody>';
+}
+function renderCalMaster(){
+  let h=`<thead><tr><th>Size</th><th class="num">Tebal (mm)</th><th class="num">INTDIA (mm)</th><th class="num">Panjang/set (m)</th><th class="num">PC/SET</th><th class="num">PC/CTN</th><th class="num">Set/CTN</th><th class="num">Meter/CTN</th><th class="num">Harga / set (Rp)</th><th>Tgl harga</th><th>Status</th><th></th></tr></thead><tbody>`;
+  M.calsil.forEach((c,i)=>{const d=calDerived(c);
+    h+=`<tr><td>${inp(c.size,`calsil.${i}.size`,'text',80)}</td><td>${inp(c.t,`calsil.${i}.t`)}</td><td>${inp(c.intdia,`calsil.${i}.intdia`)}</td><td>${inp(c.len,`calsil.${i}.len`)}</td>
+      <td>${inp(c.pcset,`calsil.${i}.pcset`)}</td><td>${inp(c.pcctn,`calsil.${i}.pcctn`)}</td>
+      <td class="num" id="msc${i}">${fN(d.setCtn,2)}</td><td class="num" id="mmc${i}">${fN(d.mCtn,3)}</td>
+      <td>${inp(c.harga,`calsil.${i}.harga`,'number',110)}</td><td id="mct${i}">${fDate(c.tglHarga)}</td>
+      <td>${inp(c.status,`calsil.${i}.status`,'text',110)}</td><td><button class="btn sm danger" data-dcal="${i}">Hapus</button></td></tr>`;});
+  $('mCal').innerHTML=h+'</tbody>';
+}
+function renderHist(){
+  if(!HIST.length){$('mHist').innerHTML='<tbody><tr><td class="muted">Belum ada perubahan tercatat.</td></tr></tbody>';return;}
+  let h=`<thead><tr><th>Waktu simpan</th><th>Jenis</th><th>Item</th><th class="num">Sebelumnya</th><th class="num">Menjadi</th><th class="num">Selisih</th><th>Keterangan</th></tr></thead><tbody>`;
+  HIST.slice().reverse().forEach(x=>{
+    const diff=(x.dari!=null&&x.ke!=null&&x.dari>0)?((x.ke-x.dari)/x.dari*100):null;
+    h+=`<tr><td>${new Date(x.t).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}</td><td>${esc(x.jenis)}</td><td>${esc(x.item)}</td>
+      <td class="num">${x.dari!=null?fRp(x.dari):'–'}</td><td class="num">${x.ke!=null?fRp(x.ke):'–'}</td>
+      <td class="num">${diff!=null?`<span class="pill ${diff>0?'bad':'ok'}">${diff>0?'+':''}${fN(diff,1)}%</span>`:'–'}</td><td>${esc(x.ket||'')}</td></tr>`;
+  });
+  $('mHist').innerHTML=h+'</tbody>';
+}
+function renderMaster(){ renderMatList(); renderAhs(); renderCalMaster(); renderHist(); bindInputs($('tab-master')); bindMasterButtons(); }
+function bindInputs(root){
+  root.querySelectorAll('[data-p]').forEach(el=>{
+    if(el._b) return; el._b=1;
+    el.addEventListener('input',onMasterInput);
+    el.addEventListener('change',e=>{
+      const p=el.dataset.p;
+      setTimeout(()=>{
+        if(/\.size$/.test(p)||/\.tipe$/.test(p)){ refreshAll(false); }
+        if(/^mat\.\d+\.(nama|satAHS|tipe|sumber|cat|hargaPer|satF|isiHarga)$/.test(p)){ renderMatList(/\.tipe$/.test(p)); renderAhs(); bindInputs($('tab-master')); bindMasterButtons(); }
+      },0);
+    });
+  });
+}
+function bindMasterButtons(){
+  const q=s=>document.querySelectorAll('#tab-master '+s);
+  q('[data-edit]').forEach(b=>b.onclick=()=>{editMat=editMat===b.dataset.edit?null:b.dataset.edit;renderMatList();bindMasterButtons();if(editMat)$('mMatForm').scrollIntoView({behavior:'smooth',block:'nearest'});});
+  q('[data-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.up;[M.mat[i-1],M.mat[i]]=[M.mat[i],M.mat[i-1]];markDirty();refreshAll(true);});
+  q('[data-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.down;[M.mat[i+1],M.mat[i]]=[M.mat[i],M.mat[i+1]];markDirty();refreshAll(true);});
+  q('[data-delmat]').forEach(b=>b.onclick=()=>{const i=+b.dataset.delmat,m=M.mat[i];
+    if(!confirm('Hapus material "'+m.nama+'"? Koefisiennya di semua size juga ikut terhapus.'))return;
+    M.mat.splice(i,1); M.ahs.forEach(a=>{delete a.k[m.id];}); if(editMat===m.id)editMat=null; markDirty(); refreshAll(true);});
+  q('[data-dahs]').forEach(b=>b.onclick=()=>{const a=M.ahs[+b.dataset.dahs];if(!confirm('Hapus size "'+a.size+'" dari tabel koefisien AHS?'))return;M.ahs.splice(+b.dataset.dahs,1);markDirty();refreshAll(true);});
+  q('[data-dcal]').forEach(b=>b.onclick=()=>{const c=M.calsil[+b.dataset.dcal];if(!confirm('Hapus size "'+c.size+'" dari Master Calcium?'))return;M.calsil.splice(+b.dataset.dcal,1);markDirty();refreshAll(true);});
+}
+function onMasterInput(e){
+  const el=e.target, path=el.dataset.p, p=path.split('.'); let o=M;
+  for(let i=0;i<p.length-1;i++) o=o[p[i]];
+  const key=p[p.length-1];
+  let val;
+  if(el.type==='number'){ val=el.value===''?null:num(el.value); }
+  else val=el.value;
+  if(p[0]==='ahs'&&p[2]==='k'&&val==null) delete o[key]; else o[key]=(el.type==='number'&&val==null)?0:val;
+  // auto-date on price change
+  if((p[0]==='mat'||p[0]==='calsil')&&key==='harga'){ o.tglHarga=today(); syncField(`${p[0]}.${p[1]}.tglHarga`,o.tglHarga); }
+  syncField(path,el.value,el);
+  markDirty();
+  M.mat.forEach((m,i)=>{const hA=num(m.harga)/(num(m.isiHarga)||1)*(num(m.isiAHS)||1);const c=$('mha'+i); if(c) c.innerHTML=num(m.harga)>0?fRp(hA):'<span class="pill bad">belum ada</span>'; const t=$('mtg'+i); if(t) t.textContent=m.tglHarga?fDate(m.tglHarga):'–';});
+  M.calsil.forEach((c,i)=>{const d=calDerived(c); const a=$('msc'+i),b=$('mmc'+i),t=$('mct'+i); if(a)a.textContent=fN(d.setCtn,2); if(b)b.textContent=fN(d.mCtn,3); if(t)t.textContent=c.tglHarga?fDate(c.tglHarga):'–';});
+  if(key==='nama'&&p[0]==='mat'&&$('mfTitle')) $('mfTitle').textContent=val;
+  const conv=$('mfConv'); if(conv){const m=M.mat.find(x=>x.id===editMat); if(m){const hF=num(m.harga)/(num(m.isiHarga)||1); conv.textContent=`${fRp(hF)} / ${m.satF} · ${fRp(hF*(num(m.isiAHS)||1))} / ${m.satAHS}`;}}
+  refreshAll(false);
+}
+function syncField(path,value,except){
+  document.querySelectorAll('#tab-master [data-p="'+path+'"]').forEach(x=>{ if(x!==except&&x.value!==String(value)) x.value=value; });
+}
+function markDirty(){dirty=true;$('mSave').disabled=false;$('mUndo').disabled=false;setSync();}
+function setSync(msg){
+  const d=$('syncDot'),t=$('syncTxt');
+  d.className='dot'+(dirty?' dirty':(savedAt?' on':''));
+  if(msg){t.textContent=msg;return;}
+  if(dirty) t.textContent='Ada perubahan master belum disimpan';
+  else t.textContent=savedAt?('Master tersimpan · '+new Date(savedAt).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})):'Master bawaan (Excel V0.3)';
+  $('mStatus').innerHTML=dirty?'<span class="pill warn">Belum disimpan</span> Perubahan sudah dipakai di perhitungan, tapi akan hilang bila halaman ditutup sebelum disimpan.'
+    :(storageOK?'Master tersimpan di browser perangkat ini. Untuk perangkat lain pakai tab Backup &amp; Pulihkan.':'Browser ini tidak mengizinkan penyimpanan — gunakan Ekspor di tab Backup &amp; Pulihkan.');
+}
+function newId(){return 'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function diffHistory(){
+  const t=new Date().toISOString(), out=[];
+  const old=SAVED;
+  M.mat.forEach(m=>{
+    const o=old.mat.find(x=>x.id===m.id);
+    if(!o) out.push({t,jenis:'Material baru',item:m.nama,dari:null,ke:num(m.harga),ket:(m.hargaPer||'')+(m.sumber?' · '+m.sumber:'')});
+    else if(num(o.harga)!==num(m.harga)) out.push({t,jenis:'Harga material',item:m.nama,dari:num(o.harga),ke:num(m.harga),ket:'per '+(m.hargaPer||'')+(m.sumber?' · '+m.sumber:'')});
+    else if(o.nama!==m.nama) out.push({t,jenis:'Ganti nama',item:m.nama,dari:null,ke:null,ket:'sebelumnya: '+o.nama});
+  });
+  old.mat.forEach(o=>{ if(!M.mat.some(m=>m.id===o.id)) out.push({t,jenis:'Material dihapus',item:o.nama,dari:num(o.harga),ke:null,ket:''}); });
+  M.calsil.forEach(c=>{
+    const o=old.calsil.find(x=>x.size===c.size);
+    if(o&&num(o.harga)!==num(c.harga)) out.push({t,jenis:'Harga Calcium',item:'Calcium Silicate '+c.size,dari:num(o.harga),ke:num(c.harga),ket:'per set'});
+    if(!o) out.push({t,jenis:'Size Calcium baru',item:c.size,dari:null,ke:num(c.harga)||null,ket:''});
+  });
+  M.ahs.forEach(a=>{ if(!old.ahs.some(x=>x.size===a.size)) out.push({t,jenis:'Size AHS baru',item:a.size,dari:null,ke:null,ket:''}); });
+  return out;
+}
+function pasteRows(txt){return txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>l.split(/\t|;/).map(x=>x.trim()));}
+
+/* ---------------- TAB: CEK (live) ---------------- */
+function renderCek(){
+  const items=[];
+  const noAhs=M.calsil.filter(c=>!findAhs(c.size)).map(c=>c.size);
+  if(noAhs.length) items.push(`<span class="pill warn">AHS belum ada</span> ${noAhs.map(esc).join(', ')}`);
+  const calNoPrice=M.calsil.filter(c=>!(num(c.harga)>0)).length;
+  const calMat=M.mat.find(m=>isCal(m));
+  if(calMat&&calNoPrice&&!(num(calMat.harga)>0)) items.push(`<span class="pill bad">Harga kosong</span> Calcium Silicate belum ada harga di ${calNoPrice} dari ${M.calsil.length} size`);
+  M.mat.forEach(m=>{if(!isCal(m)&&!(num(m.harga)>0)) items.push(`<span class="pill bad">Harga kosong</span> ${esc(m.nama)}`);});
+  M.mat.forEach(m=>{ if(!isCal(m)&&num(m.isiAHS)!==1&&num(m.isiAHS)!==num(m.isiHarga)) items.push(`<span class="pill warn">Konversi</span> ${esc(m.nama)}: 1 ${esc(m.satAHS)} AHS = ${fN(num(m.isiAHS))} ${esc(m.satF)}, harga per ${fN(num(m.isiHarga))} ${esc(m.satF)} → dikonversi lewat satuan fisik`); });
+  M.mat.forEach(m=>{ const n=M.ahs.filter(a=>!isSurface(a.size)&&(a.k[m.id]==null||a.k[m.id]==='')).length; if(n) items.push(`<span class="pill warn">Koefisien kosong</span> ${esc(m.nama)} belum punya koefisien di ${n} size pipa`); });
+  const al=M.mat.find(m=>m.id==='alu');
+  if(al) items.push(`<span class="pill warn">Konfirmasi</span> ${esc(al.nama)}: isi 1 ${esc(al.satAHS)} AHS masih dianggap ${fN(num(al.isiAHS))} ${esc(al.satF)}`);
+  $('kLive').innerHTML=items.length?`<ul class="find">${items.map(i=>`<li>${i}</li>`).join('')}</ul>`:'<span class="pill ok">Semua data lengkap</span>';
+}
+
+/* ---------------- tabs & wiring ---------------- */
+function showTab(t){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.hidden=s.id!=='tab-'+t);
+  try{localStorage.setItem('isoTab',t)}catch(e){}
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function refreshAll(rebuildMaster){
+  fillSizeSelect($('hSize')); fillSizeSelect($('cSize'),{calOnly:true});
+  renderHitung(); renderCalsil(); renderCalRef(); renderRekapInput(); renderCek();
+  if(rebuildMaster) renderMaster();
+}
+$('hSize').addEventListener('change',renderHitung); $('hProg').addEventListener('input',renderHitung);
+$('cSize').addEventListener('change',renderCalsil);
+['cBox','cPcs','cM'].forEach(id=>$(id).addEventListener('input',renderCalsil));
+$('cModeBox').onclick=()=>{cMode='box';renderCalsil();}; $('cModeM').onclick=()=>{cMode='m';renderCalsil();};
+$('rAdd').onclick=()=>{R.push({size:(R[R.length-1]||{}).size||'2"',m:0});saveR();renderRekap();};
+$('hPrint').onclick=$('rPrint').onclick=()=>window.print();
+$('mAhsAdd').onclick=()=>{M.ahs.push({size:'Size baru',k:{}});markDirty();refreshAll(true);const r=$('mAhs').querySelector('tbody tr:last-child input');if(r){r.focus();r.select();}};
+$('mCalAdd').onclick=()=>{M.calsil.push({size:'Size baru',t:50,intdia:0,len:0.61,pcset:2,pcctn:10,harga:0,tglHarga:'',status:'Available'});markDirty();refreshAll(true);const r=$('mCal').querySelector('tbody tr:last-child input');if(r){r.focus();r.select();}};
+$('mMatAdd').onclick=()=>{const id=newId();M.mat.push({id,nama:'Material baru',tipe:'umum',satAHS:'Pcs',satF:'pcs',isiAHS:1,harga:0,hargaPer:'Pcs',isiHarga:1,kemasan:'Pcs',isiKem:1,cat:'',tglHarga:'',sumber:''});editMat=id;markDirty();refreshAll(true);const f=$('mi-mat_'+(M.mat.length-1)+'_nama-f');if(f){f.focus();f.select();}};
+$('mAhsPasteBtn').onclick=()=>{$('mAhsPaste').hidden=!$('mAhsPaste').hidden;};
+$('mCalPasteBtn').onclick=()=>{$('mCalPaste').hidden=!$('mCalPaste').hidden;};
+$('mAhsApply').onclick=()=>{
+  const rows=pasteRows($('mAhsTxt').value); let add=0,upd=0;
+  rows.forEach(r=>{ if(!r[0]||parseNum(r[0])!==null&&!/"/.test(r[0])&&r.length<2) return;
+    if(/^size/i.test(r[0])) return;
+    let a=M.ahs.find(x=>x.size===r[0]); if(!a){a={size:r[0],k:{}};M.ahs.push(a);add++;} else upd++;
+    M.mat.forEach((m,j)=>{const v=parseNum(r[1+j]); if(v!=null) a.k[m.id]=v;});
+  });
+  if(!add&&!upd){alert('Tidak ada baris yang terbaca. Pastikan kolom pertama berisi size dan kolom berikutnya koefisien.');return;}
+  $('mAhsTxt').value=''; $('mAhsPaste').hidden=true; markDirty(); refreshAll(true);
+  setSync(add+' size ditambahkan, '+upd+' diperbarui — klik Simpan master');
+};
+$('mCalApply').onclick=()=>{
+  const rows=pasteRows($('mCalTxt').value); let add=0,upd=0;
+  rows.forEach(r=>{ if(!r[0]||/^size/i.test(r[0])) return;
+    let c=M.calsil.find(x=>x.size===r[0]); if(!c){c={size:r[0],t:50,intdia:0,len:0.61,pcset:2,pcctn:10,harga:0,tglHarga:'',status:'Available'};M.calsil.push(c);add++;} else upd++;
+    const v=r.slice(1).map(parseNum);
+    if(v[0]!=null)c.t=v[0]; if(v[1]!=null)c.intdia=v[1]; if(v[2]!=null)c.pcset=v[2]; if(v[3]!=null)c.pcctn=v[3];
+    if(v[4]!=null&&v[4]!==num(c.harga)){c.harga=v[4];c.tglHarga=today();}
+  });
+  if(!add&&!upd){alert('Tidak ada baris yang terbaca.');return;}
+  $('mCalTxt').value=''; $('mCalPaste').hidden=true; markDirty(); refreshAll(true);
+  setSync(add+' size ditambahkan, '+upd+' diperbarui — klik Simpan master');
+};
+$('mHistClear').onclick=()=>{if(!confirm('Kosongkan seluruh riwayat perubahan harga?'))return;HIST=[];persist();renderHist();};
+$('mUndo').onclick=()=>{if(!confirm('Batalkan semua perubahan sejak terakhir disimpan?'))return;M=clone(SAVED);dirty=false;$('mSave').disabled=true;$('mUndo').disabled=true;editMat=null;refreshAll(true);setSync();};
+$('mReset').onclick=()=>{if(!confirm('Kembalikan semua master ke data Excel V0.3? Klik Simpan master sesudahnya untuk menyimpan.'))return;M=clone(DEFAULT);editMat=null;markDirty();refreshAll(true);showSub('mat');};
+function payload(){return {v:2,app:'Kalkulator Isolasi Pipa',mat:M.mat,ahs:M.ahs,calsil:M.calsil,hist:HIST,updatedAt:new Date().toISOString()};}
+function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(payload()));storageOK=true;return true;}catch(e){storageOK=false;return false;}}
+$('mSave').onclick=()=>{
+  const bad=M.mat.filter(m=>!String(m.nama).trim()); if(bad.length){alert('Ada material tanpa nama. Isi namanya dulu.');return;}
+  const hs=diffHistory(); HIST=HIST.concat(hs).slice(-1000);
+  if(persist()){savedAt=new Date().toISOString();SAVED=clone(M);dirty=false;$('mSave').disabled=true;$('mUndo').disabled=true;renderHist();setSync();}
+  else setSync('Gagal menyimpan di browser — gunakan Ekspor di tab Backup');
+};
+$('mExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(payload(),null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='Master_Isolasi_'+today()+'.json';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+};
+$('mImport').onclick=()=>$('mFile').click();
+$('mFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{const d=JSON.parse(rd.result);
+      if(!(Array.isArray(d.mat)&&Array.isArray(d.ahs)&&Array.isArray(d.calsil))) throw 0;
+      M=normalize(d); if(Array.isArray(d.hist)&&d.hist.length>=HIST.length) HIST=d.hist;
+      editMat=null; markDirty(); refreshAll(true);
+      setSync('Master diimpor dari '+f.name+' — klik Simpan master untuk menyimpannya');
+    }catch(err){alert('File tidak dikenali. Pilih file .json hasil tombol "Ekspor master".');}
+    e.target.value='';
+  };
+  rd.readAsText(f);
+};
+
+/* init */
+try{const raw=localStorage.getItem(LS_KEY); if(raw){const d=JSON.parse(raw); if(Array.isArray(d.mat)&&Array.isArray(d.ahs)&&Array.isArray(d.calsil)){M=normalize(d);savedAt=d.updatedAt||null;HIST=Array.isArray(d.hist)?d.hist:[];}}}catch(e){storageOK=false;}
+SAVED=clone(M);
+fillSizeSelect($('hSize')); $('hSize').value='8"';
+fillSizeSelect($('cSize'),{calOnly:true}); $('cSize').value='8"';
+refreshAll(true);
+try{const t=localStorage.getItem('isoTab'); if(t&&$('tab-'+t)) showTab(t);}catch(e){}
+setSync();
+
+})();
+</script>
+</body>
+</html>
