@@ -112,6 +112,8 @@ code{font-family:var(--f-num);font-size:.92em;background:var(--panel2);padding:0
 .sheetbar.err{border-color:var(--warn);background:var(--warn-bg)}
 .sync .btn{padding:3px 9px;font-size:12.5px}
 a.btn{text-decoration:none;display:inline-block}
+#lTbl td{vertical-align:middle}
+#lRekap td{vertical-align:middle}
 @media print{
   nav.tabs,.hide-print,.sync{display:none!important}
   body{background:#fff;color:#000}
@@ -127,13 +129,14 @@ a.btn{text-decoration:none;display:inline-block}
   <header class="top">
     <div>
       <h1>Kalkulator Isolasi Pipa</h1>
-      <div class="sub">Kebutuhan material &amp; biaya dari progress meter lari — basis koefisien AHS kontrak</div>
+      <div class="sub">Kebutuhan material &amp; biaya dari progress meter lari — basis koefisien AHS kontrak · V1.2</div>
     </div>
     <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Master bawaan (Excel V0.3)</span><button class="btn hide-print" id="syncReload" hidden>Muat ulang</button></div>
   </header>
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="hitung">Hitung Progress</button>
+    <button role="tab" aria-selected="false" data-tab="line">Kebutuhan per Line</button>
     <button role="tab" aria-selected="false" data-tab="calsil">Konversi Calcium</button>
     <button role="tab" aria-selected="false" data-tab="rekap">Rekap Multi Size</button>
     <button role="tab" aria-selected="false" data-tab="master">Master Data</button>
@@ -156,6 +159,56 @@ a.btn{text-decoration:none;display:inline-block}
       Kolom <b>Beli</b> = kebutuhan yang dibulatkan ke kemasan pembelian bila size ini dibeli terpisah.
       Elbow/fitting sudah termasuk dalam meter lari.</p>
     <div id="hCal"></div>
+  </section>
+
+  <!-- ============ KEBUTUHAN PER LINE ============ -->
+  <section id="tab-line" hidden>
+    <div class="panel">
+      <h3 style="margin-top:0">Parameter insulasi &amp; cover</h3>
+      <div class="grid-in" id="lParam">
+        <label class="f">Tebal Calcium Silicate
+          <select id="lpTMode"><option value="fix">Satu tebal untuk semua size</option><option value="master">Ikut tebal Master Calcium per size</option></select></label>
+        <label class="f" id="lpTWrap">Tebal Calcium (mm)<input type="number" id="lpT" min="0" step="1"></label>
+        <label class="f">Tebal cover jacketing (mm)<input type="number" id="lpTj" min="0" step="0.1"></label>
+        <label class="f">Lebar roll cover (mm)<input type="number" id="lpW" min="0" step="10"></label>
+        <label class="f">Panjang roll dipesan (m)<select id="lpRoll"><option>50</option><option>30</option><option>25</option></select></label>
+        <label class="f">Overlap keliling (mm)<input type="number" id="lpOk" min="0" step="5"></label>
+        <label class="f">Overlap antar lembar (mm)<input type="number" id="lpOm" min="0" step="5"></label>
+        <label class="f">Waste Calcium (%)<input type="number" id="lpWcs" min="0" step="1"></label>
+        <label class="f">Waste cover (%)<input type="number" id="lpWc" min="0" step="1"></label>
+      </div>
+      <div class="formula" id="lFormula"></div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">Daftar line hasil survey</h3>
+        <div class="row hide-print">
+          <button class="btn pri" id="lImpBtn">Impor dari Excel</button><input type="file" id="lFile" accept=".xlsx,.xls,.csv" hidden>
+          <button class="btn" id="lPasteBtn">Tempel dari Excel</button>
+          <button class="btn" id="lAdd">+ Tambah line</button>
+          <button class="btn" id="lExport">Ekspor hasil (.xlsx)</button>
+          <button class="btn" id="lPrint">Cetak / PDF</button>
+          <button class="btn danger" id="lClear">Kosongkan</button>
+        </div>
+      </div>
+      <p class="muted" style="margin:8px 0 0">Impor membaca kolom <b>Area</b>, <b>Nomor Line</b>, <b>Nama Line / Service</b>, <b>Ukuran (inch)</b>, dan <b>Volume / Panjang (m)</b>. Area yang di-merge di Excel otomatis terisi ke baris di bawahnya. Kolom panjang boleh kosong dulu, lalu diisi setelah survey.</p>
+      <div id="lPaste" hidden class="panel paste">
+        <label class="f" for="lPasteTxt">Tempel baris dari Excel — urutan kolom: Area · Nomor Line · Nama Line / Service · Ukuran (inch) · Panjang (m)</label>
+        <textarea id="lPasteTxt" rows="6" placeholder="JL 114 Plant 9	21P-421	LWSR	18	25"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn pri sm" id="lPasteApply">Tambahkan</button><span class="muted">Baris ditambahkan di bawah daftar yang ada.</span></div>
+      </div>
+      <div id="lMsg"></div>
+      <div class="grid-in" style="margin-top:10px;max-width:420px"><label class="f">Tampilkan area<select id="lArea"></select></label></div>
+    </div>
+
+    <div class="tiles" id="lTiles"></div>
+    <h2>Rekap kebutuhan per ukuran</h2>
+    <div class="tbl-wrap"><table id="lRekap"></table></div>
+    <p class="muted">Carton calcium dan roll cover dibulatkan per ukuran — aman bila tiap ukuran dikerjakan terpisah. Kalau sisa roll bisa dipakai lintas ukuran, pakai angka <b>roll gabungan</b> di kotak atas (lebih hemat).</p>
+    <h2>Rincian per line</h2>
+    <div class="tbl-wrap"><table class="edit" id="lTbl"></table></div>
+    <p class="muted">Hitungan untuk pipa lurus (meter lari). Elbow, tee, flange, dan box valve belum termasuk — tambahkan meter ekuivalennya ke kolom panjang atau naikkan waste.</p>
   </section>
 
   <!-- ============ CALSIL ============ -->
@@ -779,6 +832,230 @@ function renderCek(){
   $('kLive').innerHTML=items.length?`<ul class="find">${items.map(i=>`<li>${i}</li>`).join('')}</ul>`:'<span class="pill ok">Semua data lengkap</span>';
 }
 
+/* ---------------- TAB: KEBUTUHAN PER LINE ---------------- */
+/* OD pipa standar ASME B36.10M / B36.19M (mm), kunci = NPS dalam inch */
+const PIPE_OD={0.5:21.3,0.75:26.7,1:33.4,1.25:42.2,1.5:48.3,2:60.3,2.5:73.0,3:88.9,3.5:101.6,4:114.3,5:141.3,6:168.3,8:219.1,10:273.0,12:323.8,14:355.6,16:406.4,18:457.2,20:508.0,22:558.8,24:609.6,26:660.4,28:711.2,30:762.0,32:812.8,34:863.6,36:914.4,38:965.2,40:1016.0};
+const LP_KEY='isoSurveyParam', LL_KEY='isoSurveyLines';
+const LP_DEF={tMode:'fix',t:50,tj:0.6,w:1000,roll:50,ok:50,om:50,wcs:5,wc:5};
+let LP=Object.assign({},LP_DEF), LL=[], lArea='';
+try{const s=JSON.parse(localStorage.getItem(LP_KEY)||'null'); if(s) LP=Object.assign({},LP_DEF,s);}catch(e){}
+try{const s=JSON.parse(localStorage.getItem(LL_KEY)||'null'); if(Array.isArray(s)) LL=s;}catch(e){}
+const saveLP=()=>{try{localStorage.setItem(LP_KEY,JSON.stringify(LP))}catch(e){}};
+const saveLL=()=>{try{localStorage.setItem(LL_KEY,JSON.stringify(LL))}catch(e){}};
+
+/* "18", 18, '1 1/2"', "1-1/2", "1,5", 0.5, '1/2"' -> angka inch */
+function parseInch(v){
+  if(v==null) return null;
+  if(typeof v==='number') return isFinite(v)&&v>0?v:null;
+  let s=String(v).toLowerCase().replace(/inch|inchi|in\b|["”″']/g,'').trim().replace(',','.');
+  let m=s.match(/^(\d+)\s*[\s-]\s*(\d+)\/(\d+)$/); if(m) return +m[1]+(+m[2])/(+m[3]);
+  m=s.match(/^(\d+)\/(\d+)$/); if(m) return (+m[1])/(+m[2]);
+  const n=parseFloat(s); return isFinite(n)&&n>0?n:null;
+}
+function inchLabel(k){
+  const w=Math.floor(k+1e-9), f=k-w;
+  const fr=[[0.25,'1/4'],[0.5,'1/2'],[0.75,'3/4']].find(x=>Math.abs(x[0]-f)<1e-6);
+  if(f<1e-6) return w+'"';
+  if(fr) return (w?w+' ':'')+fr[1]+'"';
+  return fN(k,3)+'"';
+}
+const findCalK=k=>M.calsil.find(c=>Math.abs(sizeKey(c.size)-k)<1e-6);
+
+function lineCalc(row){
+  const k=parseInch(row.size), L=Math.max(0,num(row.m));
+  const od=k!=null?PIPE_OD[Math.round(k*100)/100]:undefined;
+  if(k==null||od==null) return {k,L,err:k==null?'Ukuran kosong':'Ukuran '+inchLabel(k)+' tidak ada di tabel OD'};
+  const c=findCalK(k);
+  const t=LP.tMode==='master'?(c?num(c.t):thickRule(inchLabel(k))):num(LP.t);
+  const odi=od+2*t, odj=odi+2*num(LP.tj);
+  const kel=Math.PI*odj, cut=kel+num(LP.ok);
+  const eff=num(LP.w)-num(LP.om);
+  const rollPerM=eff>0?cut/eff:0;                       // m roll per m pipa
+  const coverM=L*rollPerM*(1+num(LP.wc)/100);
+  const coverM2=coverM*num(LP.w)/1000;
+  const vol=Math.PI/4*((odi/1000)**2-(od/1000)**2)*L*(1+num(LP.wcs)/100);
+  const len=c&&num(c.len)>0?num(c.len):0.61;
+  const sets=L/len*(1+num(LP.wcs)/100);
+  const pcs=c?sets*num(c.pcset):null;
+  const ctn=c&&num(c.pcctn)>0?pcs/num(c.pcctn):null;
+  const thickMismatch=!!(c&&num(c.t)!==t);
+  return {k,L,od,t,odi,odj,kel,cut,rollPerM,coverM,coverM2,vol,len,sets,pcs,ctn,c,thickMismatch};
+}
+
+function renderLineParams(){
+  const set=(id,v)=>{const el=$(id); if(el&&document.activeElement!==el) el.value=v;};
+  set('lpTMode',LP.tMode); set('lpT',LP.t); set('lpTj',LP.tj); set('lpW',LP.w); set('lpRoll',String(LP.roll));
+  set('lpOk',LP.ok); set('lpOm',LP.om); set('lpWcs',LP.wcs); set('lpWc',LP.wc);
+  $('lpTWrap').hidden=LP.tMode!=='fix';
+  const eff=num(LP.w)-num(LP.om);
+  $('lFormula').innerHTML=
+    `OD insulasi = OD pipa + 2 × ${LP.tMode==='fix'?fN(num(LP.t),1)+' mm':'tebal master'} &nbsp;·&nbsp; OD jacketing = OD insulasi + 2 × ${fN(num(LP.tj),2)} mm<br>`+
+    `Panjang potong cover = π × OD jacketing + ${fN(num(LP.ok),0)} mm &nbsp;·&nbsp; 1 lembar lebar ${fN(num(LP.w),0)} mm menutup ${fN(eff,0)} mm pipa<br>`+
+    `Roll terpakai per m pipa = panjang potong ÷ ${fN(eff,0)} &nbsp;·&nbsp; Roll = total m roll ÷ panjang roll, dibulatkan ke atas<br>`+
+    `Calcium (set) = panjang pipa ÷ panjang 1 set (Master Calcium, umumnya 0,61 m) × (1 + waste) &nbsp;·&nbsp; Carton = set × PC/SET ÷ PC/CTN`;
+}
+
+function renderLine(){
+  renderLineParams();
+  const areas=[...new Set(LL.map(r=>String(r.area||'').trim()).filter(Boolean))];
+  const sel=$('lArea');
+  sel.innerHTML='<option value="">Semua area</option>'+areas.map(a=>`<option${a===lArea?' selected':''}>${esc(a)}</option>`).join('');
+  if(lArea&&!areas.includes(lArea)){lArea='';sel.value='';}
+  const rows=LL.map((r,i)=>({r,i,c:lineCalc(r)})).filter(x=>!lArea||String(x.r.area||'').trim()===lArea);
+
+  // ---- rekap per ukuran
+  const by=new Map(); let totL=0,totCov=0,totM2=0,totVol=0,emptyL=0,errN=0;
+  rows.forEach(({r,c})=>{
+    if(c.err){errN++;return;}
+    if(!(c.L>0)) emptyL++;
+    const g=by.get(c.k)||{k:c.k,n:0,L:0,sets:0,pcs:0,ctn:0,hasCtn:true,cov:0,m2:0,vol:0,od:c.od,odj:c.odj,t:c.t,rpm:c.rollPerM,mism:false,c:c.c};
+    g.n++; g.L+=c.L; g.sets+=c.sets; g.pcs+=(c.pcs||0); if(c.ctn==null) g.hasCtn=false; else g.ctn+=c.ctn;
+    g.cov+=c.coverM; g.m2+=c.coverM2; g.vol+=c.vol; g.mism=g.mism||c.thickMismatch; by.set(c.k,g);
+    totL+=c.L; totCov+=c.coverM; totM2+=c.coverM2; totVol+=c.vol;
+  });
+  const G=[...by.values()].sort((a,b)=>a.k-b.k);
+  const R50=x=>Math.ceil(x/50-1e-9), R30=x=>Math.ceil(x/30-1e-9), RR=x=>Math.ceil(x/num(LP.roll)-1e-9);
+  let h=`<thead><tr><th>Ukuran</th><th class="num">Line</th><th class="num">Panjang (m)</th><th class="num">OD pipa → jacketing (mm)</th><th class="num">Tebal CaSi</th>
+    <th class="num">Calcium (set)</th><th class="num">Pcs</th><th class="num">Carton beli</th><th class="num">Vol CaSi (m³)</th>
+    <th class="num">Cover (m roll)</th><th class="num">Cover (m²)</th><th class="num">Roll 50 m</th><th class="num">Roll 30 m</th></tr></thead><tbody>`;
+  let ctnTot=0, r50=0, r30=0;
+  G.forEach(g=>{
+    const cb=g.hasCtn?Math.ceil(g.ctn-1e-9):null; if(cb!=null) ctnTot+=cb;
+    r50+=R50(g.cov); r30+=R30(g.cov);
+    h+=`<tr><td><b>${esc(inchLabel(g.k))}</b></td><td class="num">${g.n}</td><td class="num">${fN(g.L,1)}</td>
+      <td class="num">${fN(g.od,1)} → ${fN(g.odj,1)}</td><td class="num">${fN(g.t,0)} mm${g.mism?'<span class="s" style="color:var(--warn)">beda dgn master</span>':''}</td>
+      <td class="num">${fN(g.sets,1)}</td><td class="num">${g.c?fN(Math.ceil(g.pcs-1e-9),0):'–'}</td>
+      <td class="num">${cb!=null?fN(cb,0)+'<span class="s">teoritis '+fN(g.ctn,2)+'</span>':'<span class="pill warn">size belum di master</span>'}</td>
+      <td class="num">${fN(g.vol,3)}</td><td class="num">${fN(g.cov,1)}<span class="s">${fN(g.rpm,3)} m/m pipa</span></td><td class="num">${fN(g.m2,1)}</td>
+      <td class="num"><b>${R50(g.cov)}</b></td><td class="num"><b>${R30(g.cov)}</b></td></tr>`;
+  });
+  if(!G.length) h+=`<tr><td colspan="13" class="muted">Belum ada line. Impor list line dari Excel atau klik + Tambah line.</td></tr>`;
+  const totSets=G.reduce((s,g)=>s+g.sets,0);
+  h+=`</tbody><tfoot><tr><td>Total</td><td class="num">${G.reduce((s,g)=>s+g.n,0)}</td><td class="num">${fN(totL,1)}</td><td></td><td></td>
+    <td class="num">${fN(totSets,1)}</td><td></td><td class="num">${fN(ctnTot,0)}</td><td class="num">${fN(totVol,3)}</td><td class="num">${fN(totCov,1)}</td><td class="num">${fN(totM2,1)}</td>
+    <td class="num">${r50}</td><td class="num">${r30}</td></tr></tfoot>`;
+  $('lRekap').innerHTML=h;
+
+  $('lTiles').innerHTML=[
+    ['Total panjang pipa',fN(totL,1)+' m',rows.length+' line'+(emptyL?' · '+emptyL+' belum diisi panjang':'')],
+    ['Calcium Silicate',fN(ctnTot,0)+' carton',fN(totSets,1)+' set · '+fN(totVol,2)+' m³',true],
+    ['Cover terpakai',fN(totCov,1)+' m roll',fN(totM2,1)+' m² (lebar '+fN(num(LP.w),0)+' mm)'],
+    ['Roll gabungan '+LP.roll+' m',fN(RR(totCov),0)+' roll','50 m: '+R50(totCov)+' roll · 30 m: '+R30(totCov)+' roll',true],
+  ].map(t=>`<div class="tile${t[3]?' hl':''}"><div class="k">${esc(t[0])}</div><div class="v">${t[1]}</div><div class="n">${esc(t[2])}</div></div>`).join('');
+
+  // ---- tabel per line (editable)
+  let b=`<thead><tr><th>Area</th><th>Nomor line</th><th>Service</th><th class="num">Ukuran (inch)</th><th class="num">Panjang (m)</th>
+    <th class="num">OD jacketing</th><th class="num">Calcium (set)</th><th class="num">Carton</th><th class="num">Cover (m roll)</th><th class="num">Cover (m²)</th><th class="hide-print"></th></tr></thead><tbody>`;
+  rows.forEach(({r,i,c})=>{
+    b+=`<tr${c.err?' class="miss"':''}><td><input type="text" data-li="${i}" data-lf="area" value="${esc(r.area)}" style="min-width:110px"></td>
+      <td><input type="text" data-li="${i}" data-lf="line" value="${esc(r.line)}" style="min-width:110px"></td>
+      <td><input type="text" data-li="${i}" data-lf="svc" value="${esc(r.svc)}" style="min-width:110px"></td>
+      <td class="num"><input type="text" data-li="${i}" data-lf="size" value="${esc(r.size)}" style="min-width:64px;max-width:80px;text-align:right"></td>
+      <td class="num"><input type="number" step="any" min="0" data-li="${i}" data-lf="m" value="${r.m===''||r.m==null?'':esc(r.m)}" placeholder="isi" style="min-width:70px;max-width:96px"></td>
+      ${c.err?`<td class="num" colspan="5"><span class="pill bad">${esc(c.err)}</span></td>`:
+      `<td class="num">${fN(c.odj,1)}</td><td class="num">${c.L>0?fN(c.sets,1):'–'}</td><td class="num">${c.L>0&&c.ctn!=null?fN(c.ctn,2):'–'}</td>
+       <td class="num">${c.L>0?fN(c.coverM,2):'–'}</td><td class="num">${c.L>0?fN(c.coverM2,2):'–'}</td>`}
+      <td class="hide-print"><button class="btn sm danger" data-ldel="${i}" aria-label="Hapus line">Hapus</button></td></tr>`;
+  });
+  $('lTbl').innerHTML=b+'</tbody>';
+  $('lTbl').querySelectorAll('[data-li]').forEach(el=>{
+    el.addEventListener('change',e=>{const i=+e.target.dataset.li,f=e.target.dataset.lf; LL[i][f]=e.target.value; saveLL(); renderLine();});
+  });
+  $('lTbl').querySelectorAll('[data-ldel]').forEach(bt=>bt.onclick=()=>{LL.splice(+bt.dataset.ldel,1);saveLL();renderLine();});
+
+  const warn=[];
+  if(errN) warn.push(errN+' line ukurannya belum terbaca — cek kolom Ukuran.');
+  if(G.some(g=>g.mism)) warn.push('Tebal calcium yang dipakai berbeda dengan tebal di Master Calcium untuk sebagian size, sehingga isi carton di master bisa tidak cocok. Cek isi carton ke supplier untuk tebal tersebut.');
+  if(G.some(g=>!g.c)) warn.push('Sebagian size belum ada di Master Calcium, jadi carton tidak bisa dihitung (set tetap dihitung dengan panjang 0,61 m).');
+  if($('lMsg').dataset.keep!=='1') $('lMsg').innerHTML=warn.map(w=>`<div class="note">${esc(w)}</div>`).join('');
+  $('lMsg').dataset.keep='';
+}
+
+/* ---- impor Excel ---- */
+let XLSXlib=null;
+function loadXLSX(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok,no)=>{const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>ok(window.XLSX); s.onerror=()=>no(new Error('Gagal memuat pembaca Excel (cek internet).')); document.head.appendChild(s);});
+}
+function rowsToLines(aoa){
+  // cari baris judul yang punya kolom ukuran
+  let hi=-1,map={};
+  for(let i=0;i<Math.min(aoa.length,30);i++){
+    const h=(aoa[i]||[]).map(normH);
+    const f=(...keys)=>h.findIndex(x=>keys.some(k=>x.includes(k)));
+    const iSize=f('ukuran','pipainchi','inch','nps','size');
+    if(iSize>=0){hi=i;map={size:iSize,area:f('area'),line:f('nomorline','noline','linenumber','nomor'),svc:f('namaline','service','fluida'),
+      m:f('volume','panjang','jumlahmeter','meter','length')};break;}
+  }
+  if(hi<0) throw new Error('Kolom "Ukuran (inch)" tidak ditemukan di berkas.');
+  if(map.line===map.svc) map.svc=-1;
+  const out=[]; let lastArea='';
+  aoa.slice(hi+1).forEach(r=>{
+    if(!r) return;
+    const get=i=>i>=0&&r[i]!=null?String(r[i]).trim():'';
+    let area=get(map.area); if(area) lastArea=area; else area=lastArea;
+    const size=get(map.size), line=get(map.line);
+    if(!size&&!line) return;
+    if(/^total/i.test(get(0))||/^total/i.test(area)&&!size) return;
+    const mv=map.m>=0?r[map.m]:'';
+    out.push({area,line,svc:get(map.svc),size,m:(mv===''||mv==null)?'':num(mv)});
+  });
+  return out;
+}
+$('lImpBtn').onclick=()=>$('lFile').click();
+$('lFile').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const X=await loadXLSX();
+    const wb=X.read(await f.arrayBuffer(),{type:'array'});
+    let lines=null, used='';
+    for(const n of wb.SheetNames){
+      const aoa=X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''});
+      try{lines=rowsToLines(aoa);used=n;if(lines.length)break;}catch(err){}
+    }
+    if(!lines||!lines.length) throw new Error('Tidak ada baris line yang terbaca. Pastikan ada kolom Ukuran (inch).');
+    if(LL.length&&confirm('Ganti daftar line yang ada dengan isi berkas ini?\nOK = ganti · Batal = tambahkan di bawah')) LL=lines; else LL=LL.concat(lines);
+    saveLL(); lArea=''; renderLine();
+    $('lMsg').innerHTML=`<div class="note info">${lines.length} line diimpor dari <b>${esc(f.name)}</b> (sheet “${esc(used)}”).</div>`; $('lMsg').dataset.keep='1';
+  }catch(err){ alert(err.message||String(err)); }
+  e.target.value='';
+};
+$('lPasteBtn').onclick=()=>{$('lPaste').hidden=!$('lPaste').hidden;};
+$('lPasteApply').onclick=()=>{
+  const rows=pasteRows($('lPasteTxt').value).filter(r=>!/ukuran|inch/i.test(r.join(' ')));
+  const add=rows.map(r=>({area:r[0]||'',line:r[1]||'',svc:r[2]||'',size:r[3]||'',m:r[4]!=null&&r[4]!==''?parseNum(r[4]):''})).filter(r=>r.size||r.line);
+  if(!add.length){alert('Tidak ada baris yang terbaca. Urutan kolom: Area, Nomor Line, Service, Ukuran, Panjang.');return;}
+  LL=LL.concat(add); saveLL(); $('lPasteTxt').value=''; $('lPaste').hidden=true; renderLine();
+};
+$('lAdd').onclick=()=>{const last=LL[LL.length-1]||{}; LL.push({area:lArea||last.area||'',line:'',svc:'',size:last.size||'',m:''}); saveLL(); renderLine();
+  const ins=$('lTbl').querySelectorAll('tbody tr:last-child input'); if(ins[1]) ins[1].focus();};
+$('lClear').onclick=()=>{if(!LL.length||!confirm('Hapus semua line di daftar?'))return; LL=[]; saveLL(); renderLine();};
+$('lPrint').onclick=()=>window.print();
+$('lArea').onchange=e=>{lArea=e.target.value;renderLine();};
+[['lpTMode','tMode',false],['lpT','t',true],['lpTj','tj',true],['lpW','w',true],['lpRoll','roll',true],['lpOk','ok',true],['lpOm','om',true],['lpWcs','wcs',true],['lpWc','wc',true]]
+  .forEach(([id,key,isNum])=>$(id).addEventListener(id==='lpTMode'||id==='lpRoll'?'change':'input',e=>{LP[key]=isNum?num(e.target.value):e.target.value; saveLP(); renderLine();}));
+$('lExport').onclick=async()=>{
+  try{
+    const X=await loadXLSX();
+    const per=[['Area','Nomor Line','Service','Ukuran (inch)','Panjang (m)','OD Pipa (mm)','Tebal CaSi (mm)','OD Insulasi (mm)','OD Jacketing (mm)','Calcium (set)','Calcium (pcs)','Calcium (carton)','Vol CaSi (m3)','Cover (m roll)','Cover (m2)']];
+    const by=new Map();
+    LL.forEach(r=>{const c=lineCalc(r);
+      if(c.err){per.push([r.area,r.line,r.svc,r.size,r.m,c.err]);return;}
+      per.push([r.area,r.line,r.svc,inchLabel(c.k),c.L,c.od,c.t,+c.odi.toFixed(1),+c.odj.toFixed(1),+c.sets.toFixed(2),c.pcs!=null?Math.ceil(c.pcs-1e-9):'',c.ctn!=null?+c.ctn.toFixed(2):'',+c.vol.toFixed(4),+c.coverM.toFixed(2),+c.coverM2.toFixed(2)]);
+      const g=by.get(c.k)||{k:c.k,n:0,L:0,sets:0,ctn:0,hc:true,cov:0,m2:0,vol:0}; g.n++;g.L+=c.L;g.sets+=c.sets;if(c.ctn==null)g.hc=false;else g.ctn+=c.ctn;g.cov+=c.coverM;g.m2+=c.coverM2;g.vol+=c.vol;by.set(c.k,g);});
+    const rk=[['Ukuran (inch)','Jumlah line','Panjang (m)','Calcium (set)','Carton beli','Vol CaSi (m3)','Cover (m roll)','Cover (m2)','Roll 50 m','Roll 30 m']];
+    [...by.values()].sort((a,b)=>a.k-b.k).forEach(g=>rk.push([inchLabel(g.k),g.n,+g.L.toFixed(2),+g.sets.toFixed(2),g.hc?Math.ceil(g.ctn-1e-9):'',+g.vol.toFixed(4),+g.cov.toFixed(2),+g.m2.toFixed(2),Math.ceil(g.cov/50-1e-9),Math.ceil(g.cov/30-1e-9)]));
+    const prm=[['Parameter','Nilai'],['Tebal Calcium',LP.tMode==='fix'?LP.t+' mm':'ikut Master Calcium'],['Tebal cover (mm)',LP.tj],['Lebar roll (mm)',LP.w],['Overlap keliling (mm)',LP.ok],['Overlap antar lembar (mm)',LP.om],['Waste Calcium (%)',LP.wcs],['Waste cover (%)',LP.wc],['Dibuat',new Date().toLocaleString('id-ID')]];
+    const wb=X.utils.book_new();
+    X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rk),'Rekap Ukuran');
+    X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(per),'Per Line');
+    X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(prm),'Parameter');
+    X.writeFile(wb,'Kebutuhan_Insulasi_per_Line_'+today()+'.xlsx');
+  }catch(err){alert(err.message||String(err));}
+};
+
 /* ---------------- tabs & wiring ---------------- */
 function showTab(t){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
@@ -788,7 +1065,7 @@ function showTab(t){
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function refreshAll(rebuildMaster){
   fillSizeSelect($('hSize')); fillSizeSelect($('cSize'),{calOnly:true});
-  renderHitung(); renderCalsil(); renderCalRef(); renderRekapInput(); renderCek();
+  renderHitung(); renderCalsil(); renderCalRef(); renderRekapInput(); renderLine(); renderCek();
   if(rebuildMaster) renderMaster();
 }
 $('hSize').addEventListener('change',renderHitung); $('hProg').addEventListener('input',renderHitung);
